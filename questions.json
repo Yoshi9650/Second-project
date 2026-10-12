@@ -1,0 +1,5 @@
+[
+  {"question": "Stolica Polski?", "answers": ["Kraków", "Warszawa", "Gdańsk"], "correct": 1},
+  {"question": "Ile to 7 × 8?", "answers": ["54", "56", "64"], "correct": 1},
+  {"question": "Który język służy do stylów strony?", "answers": ["HTML", "CSS", "Python"], "correct": 1}
+]
