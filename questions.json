@@ -86,5 +86,14 @@
   {"question": "Który składany telefon z 2019 roku składał ekran na zewnątrz?", "answers": ["Samsung Galaxy Fold", "Huawei Mate X", "Motorola Razr"], "correct": 1},
   {"question": "Ile baterii ma zwykle składany telefon typu książka?", "answers": ["4", "1", "2"], "correct": 2},
   {"question": "Czym jest crease w składanym telefonie?", "answers": ["Widocznym zagięciem ekranu w miejscu składania", "Rodzajem szybkiego ładowania", "Nakładką systemową"], "correct": 0},
-  {"question": "Jak nazywa się pierwszy składany Samsung typu klapka (2020)?", "answers": ["Galaxy Z Fold", "Galaxy Note Flip", "Galaxy Z Flip"], "correct": 2}
+  {"question": "Jak nazywa się pierwszy składany Samsung typu klapka (2020)?", "answers": ["Galaxy Z Fold", "Galaxy Note Flip", "Galaxy Z Flip"], "correct": 2},
+  {"question": "Co było wyjątkowe w LG Wing?", "answers": ["Główny ekran obracał się o 90° i odsłaniał drugi, mniejszy", "Składał się jak klapka", "Miał wysuwany aparat z tyłu"], "correct": 0},
+  {"question": "Który telefon LG miał wymienny dolny moduł z baterią i dopinane akcesoria?", "answers": ["LG G4", "LG G5", "LG G6"], "correct": 1},
+  {"question": "Który telefon LG z 2020 roku otwierał nową stylizowaną linię po serii G i miał aparaty ułożone w kształt kropli?", "answers": ["LG G5", "LG V10", "LG Velvet"], "correct": 2},
+  {"question": "Jak nazywało się etui z dodatkowym ekranem do telefonów LG (np. V50, G8X, V60)?", "answers": ["LG Dual Screen", "LG Flip Case", "LG Smart Cover"], "correct": 0},
+  {"question": "Który telefon LG miał dodatkowy, mały ekran nad głównym wyświetlaczem?", "answers": ["LG G3", "LG V10", "LG Optimus L7"], "correct": 1},
+  {"question": "Który telefon LG ze zwijanym ekranem pokazano w 2021 roku, ale nigdy nie trafił do sprzedaży?", "answers": ["LG Wing", "LG Velvet", "LG Rollable"], "correct": 2},
+  {"question": "W którym roku LG ogłosiło zamknięcie działu smartfonów?", "answers": ["2019", "2021", "2023"], "correct": 1},
+  {"question": "Który telefon LG miał zakrzywioną obudowę i tył, który sam znikał z drobnych rys?", "answers": ["LG G Flex", "LG Chocolate", "LG G3"], "correct": 0},
+  {"question": "Która seria telefonów LG słynęła z dopracowanego dźwięku (Hi-Fi Quad DAC) i dobrego nagrywania wideo?", "answers": ["Seria K", "Seria L", "Seria V"], "correct": 2}
 ]

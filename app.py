@@ -19,7 +19,7 @@ def index():
 def questions():
     qs = load_json("questions.json", [])
     random.shuffle(qs)
-    return jsonify(qs[:10])
+    return jsonify(qs[:15])
 
 @app.route("/api/score", methods=["POST"])
 def save_score():
