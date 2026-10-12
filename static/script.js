@@ -11,6 +11,12 @@ function showQuestion() {
   document.getElementById("question").textContent = q.question;
   document.getElementById("progress").textContent =
     `Pytanie ${current + 1} z ${questions.length}`;
+  document.getElementById("bar-fill").style.width =
+    (current / questions.length * 100) + "%";
+  const qEl = document.getElementById("question");
+    qEl.classList.remove("anim");
+    void qEl.offsetWidth;
+    qEl.classList.add("anim");
 
   const box = document.getElementById("answers");
   box.innerHTML = "";
