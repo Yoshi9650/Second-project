@@ -41,12 +41,10 @@ function answer(i) {
   if (i !== correct) buttons[i].classList.add("bad");
   else score++;
 
-  setTimeout(() => {
-    locked = false;
-    current++;
-    if (current < questions.length) showQuestion();
-    else finish();
-  }, 800);
+  const next = document.getElementById("next");
+  next.textContent =
+    current + 1 < questions.length ? "Dalej →" : "Zobacz wynik";
+  next.hidden = false;
 }
 
 function finish() {
@@ -80,3 +78,11 @@ async function loadRanking() {
 }
 
 start();
+
+document.getElementById("next").addEventListener("click", () => {
+  document.getElementById("next").hidden = true;
+  locked = false;
+  current++;
+  if (current < questions.length) showQuestion();
+  else finish();
+});
