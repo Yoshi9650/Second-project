@@ -191,3 +191,30 @@ h1 {
 #next[hidden] {
   display: none;
 }
+
+.timer {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+#timer-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--akcent-2);
+  border-radius: 999px;
+  transition: width 0.1s linear;
+}
+
+#explanation {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border-left: 4px solid var(--akcent-1);
+  animation: pojawianie 0.3s ease;
+}
+#explanation[hidden] {
+  display: none;
+}
