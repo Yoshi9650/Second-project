@@ -218,3 +218,35 @@ h1 {
 #explanation[hidden] {
   display: none;
 }
+
+.timer-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.timer-row .timer {
+  flex: 1;
+  margin-bottom: 0;
+}
+#timer-text {
+  min-width: 48px;
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+#timer-fill.low {
+  background: var(--zly);
+}
+
+#feedback {
+  margin: 16px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  animation: pojawianie 0.3s ease;
+}
+#feedback.good { color: #86efac; }
+#feedback.bad  { color: #fca5a5; }
+#feedback[hidden] {
+  display: none;
+}

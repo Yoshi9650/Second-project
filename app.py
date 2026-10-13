@@ -29,6 +29,7 @@ def save_score():
         "name": data["name"],
         "score": data["score"],
         "total": data["total"],
+        "points": data.get("points", 0),
         "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
     })
     with open("results.json", "w", encoding="utf-8") as f:
@@ -38,7 +39,7 @@ def save_score():
 @app.route("/api/results")
 def results():
     res = load_json("results.json", [])
-    res.sort(key=lambda r: r["score"], reverse=True)
+    res.sort(key=lambda r: r.get("points", 0), reverse=True)
     return jsonify(res[:10])
 
 if __name__ == "__main__":
