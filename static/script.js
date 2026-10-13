@@ -19,6 +19,7 @@ const TEXTS = {
     namePlaceholder: "Twoje imię",
     anonymous: "Anonim",
     ranking: "Ranking",
+    noQuestions: "Brak pytań dla tego języka.",
   },
   en: {
     title: "📱 Tech Quiz",
@@ -40,6 +41,7 @@ const TEXTS = {
     namePlaceholder: "Your name",
     anonymous: "Anonymous",
     ranking: "Leaderboard",
+    noQuestions: "No questions found for this language.",
   },
 };
 
@@ -112,12 +114,26 @@ function startTimer() {
   }, 100);
 }
 
+function clearQuizView() {
+  clearInterval(timerId);
+  document.getElementById("question").textContent = "";
+  document.getElementById("answers").innerHTML = "";
+  document.getElementById("progress").textContent = "";
+  document.getElementById("timer-text").textContent = "";
+  document.getElementById("timer-fill").style.width = "0%";
+  document.getElementById("bar-fill").style.width = "0%";
+  document.getElementById("feedback").hidden = true;
+  document.getElementById("explanation").hidden = true;
+  document.getElementById("next").hidden = true;
+}
+
 async function start() {
+  clearQuizView();
   const res = await fetch("/api/questions?lang=" + lang);
   questions = await res.json();
+
   if (questions.length === 0) {
-    document.getElementById("question").textContent =
-      "No questions found for this language.";
+    document.getElementById("question").textContent = t("noQuestions");
     return;
   }
   showQuestion();
