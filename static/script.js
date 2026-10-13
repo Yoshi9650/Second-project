@@ -1,3 +1,80 @@
+const TEXTS = {
+  pl: {
+    title: "📱 Quiz o technologii",
+    question: "Pytanie {n} z {total}",
+    pts: "pkt",
+    streak: "seria",
+    next: "Dalej →",
+    seeResult: "Zobacz wynik",
+    correct: "✅ Dobrze! +{base} pkt, +{bonus} za szybkość",
+    timeout: "⏰ Czas minął!",
+    wrong: "❌ Niestety źle",
+    score: "Wynik",
+    msgPerfect: "Perfekcyjnie! 🏆",
+    msgGreat: "Świetnie! 🔥",
+    msgOk: "Nieźle, spróbuj jeszcze raz",
+    msgLow: "Trochę ćwiczeń i będzie dobrze 😄",
+    save: "Zapisz wynik",
+    again: "Zagraj jeszcze raz",
+    namePlaceholder: "Twoje imię",
+    anonymous: "Anonim",
+    ranking: "Ranking",
+  },
+  en: {
+    title: "📱 Tech Quiz",
+    question: "Question {n} of {total}",
+    pts: "pts",
+    streak: "streak",
+    next: "Next →",
+    seeResult: "See result",
+    correct: "✅ Correct! +{base} pts, +{bonus} speed bonus",
+    timeout: "⏰ Time's up!",
+    wrong: "❌ Wrong answer",
+    score: "Score",
+    msgPerfect: "Perfect! 🏆",
+    msgGreat: "Great job! 🔥",
+    msgOk: "Not bad, try again",
+    msgLow: "A bit of practice and you'll get there 😄",
+    save: "Save score",
+    again: "Play again",
+    namePlaceholder: "Your name",
+    anonymous: "Anonymous",
+    ranking: "Leaderboard",
+  },
+};
+
+let lang = localStorage.getItem("lang") ||
+  (navigator.language.startsWith("pl") ? "pl" : "en");
+
+function t(key, vars = {}) {
+  let s = TEXTS[lang][key];
+  for (const name in vars) {
+    s = s.replace("{" + name + "}", vars[name]);
+  }
+  return s;
+}
+
+function applyTexts() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  document.querySelectorAll(".lang button").forEach((b) => {
+    b.classList.toggle("active", b.dataset.lang === lang);
+  });
+}
+
+function setLanguage(l) {
+  if (l === lang) return;
+  lang = l;
+  localStorage.setItem("lang", lang);
+  applyTexts();
+  resetQuiz();
+}
+
 let questions = [], current = 0, score = 0, streak = 0, points = 0;
 let locked = false;
 
@@ -8,8 +85,9 @@ let timeLeft = TIME, timerId;
 
 function updateProgress() {
   document.getElementById("progress").textContent =
-    `Pytanie ${current + 1} z ${questions.length}  ·  ⭐ ${points} pkt` +
-    (streak >= 2 ? `  ·  🔥 seria: ${streak}` : "");
+    t("question", { n: current + 1, total: questions.length }) +
+    `  ·  ⭐ ${points} ${t("pts")}` +
+    (streak >= 2 ? `  ·  🔥 ${t("streak")}: ${streak}` : "");
 }
 
 function showTime() {
@@ -35,9 +113,22 @@ function startTimer() {
 }
 
 async function start() {
-  const res = await fetch("/api/questions");
+  const res = await fetch("/api/questions?lang=" + lang);
   questions = await res.json();
+  if (questions.length === 0) {
+    document.getElementById("question").textContent =
+      "No questions found for this language.";
+    return;
+  }
   showQuestion();
+}
+
+function resetQuiz() {
+  clearInterval(timerId);
+  current = 0; score = 0; streak = 0; points = 0; locked = false;
+  document.getElementById("quiz").hidden = false;
+  document.getElementById("end").hidden = true;
+  start();
 }
 
 function showQuestion() {
@@ -84,16 +175,16 @@ function answer(i) {
     score++;
     streak++;
     points += BASE_POINTS + bonus;
-    fb.textContent = `✅ Dobrze! +${BASE_POINTS} pkt, +${bonus} za szybkość`;
+    fb.textContent = t("correct", { base: BASE_POINTS, bonus: bonus });
     fb.className = "good";
   } else if (i === -1) {
     streak = 0;
-    fb.textContent = "⏰ Czas minął!";
+    fb.textContent = t("timeout");
     fb.className = "bad";
   } else {
     streak = 0;
     buttons[i].classList.add("bad");
-    fb.textContent = "❌ Niestety źle";
+    fb.textContent = t("wrong");
     fb.className = "bad";
   }
   fb.hidden = false;
@@ -107,7 +198,7 @@ function answer(i) {
 
   const next = document.getElementById("next");
   next.textContent =
-    current + 1 < questions.length ? "Dalej →" : "Zobacz wynik";
+    current + 1 < questions.length ? t("next") : t("seeResult");
   next.hidden = false;
 }
 
@@ -116,24 +207,14 @@ function finish() {
   document.getElementById("end").hidden = false;
 
   const p = score / questions.length;
-  const msg = p === 1 ? "Perfekcyjnie! 🏆"
-            : p >= 0.7 ? "Świetnie! 🔥"
-            : p >= 0.4 ? "Nieźle, spróbuj jeszcze raz"
-            : "Trochę ćwiczeń i będzie dobrze 😄";
+  const msg = p === 1 ? t("msgPerfect")
+            : p >= 0.7 ? t("msgGreat")
+            : p >= 0.4 ? t("msgOk")
+            : t("msgLow");
   document.getElementById("result").textContent =
-    `Wynik: ${score} / ${questions.length}  ·  ⭐ ${points} pkt — ${msg}`;
+    `${t("score")}: ${score} / ${questions.length}  ·  ⭐ ${points} ${t("pts")} — ${msg}`;
   loadRanking();
 }
-
-document.getElementById("save").addEventListener("click", async () => {
-  const name = document.getElementById("name").value || "Anonim";
-  await fetch("/api/score", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, score, total: questions.length, points }),
-  });
-  loadRanking();
-});
 
 async function loadRanking() {
   const res = await fetch("/api/results");
@@ -143,10 +224,22 @@ async function loadRanking() {
   data.forEach((r) => {
     const li = document.createElement("li");
     li.textContent =
-      `${r.name}: ⭐ ${r.points ?? 0} pkt (${r.score}/${r.total}) — ${r.date}`;
+      `${r.name}: ⭐ ${r.points ?? 0} ${t("pts")} (${r.score}/${r.total}) — ${r.date}`;
     list.appendChild(li);
   });
 }
+
+document.getElementById("save").addEventListener("click", async () => {
+  const name = document.getElementById("name").value || t("anonymous");
+  await fetch("/api/score", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, score, total: questions.length, points }),
+  });
+  loadRanking();
+});
+
+document.getElementById("again").addEventListener("click", resetQuiz);
 
 document.getElementById("next").addEventListener("click", () => {
   document.getElementById("next").hidden = true;
@@ -154,6 +247,10 @@ document.getElementById("next").addEventListener("click", () => {
   current++;
   if (current < questions.length) showQuestion();
   else finish();
+});
+
+document.querySelectorAll(".lang button").forEach((b) => {
+  b.addEventListener("click", () => setLanguage(b.dataset.lang));
 });
 
 document.addEventListener("keydown", (e) => {
@@ -170,4 +267,5 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+applyTexts();
 start();
