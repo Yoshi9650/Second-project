@@ -28,11 +28,25 @@ function showQuestion() {
   });
 }
 
+let locked = false;
+
 function answer(i) {
-  if (i === questions[current].correct) score++;
-  current++;
-  if (current < questions.length) showQuestion();
-  else finish();
+  if (locked) return;
+  locked = true;
+
+  const correct = questions[current].correct;
+  const buttons = document.querySelectorAll("#answers button");
+
+  buttons[correct].classList.add("good");
+  if (i !== correct) buttons[i].classList.add("bad");
+  else score++;
+
+  setTimeout(() => {
+    locked = false;
+    current++;
+    if (current < questions.length) showQuestion();
+    else finish();
+  }, 800);
 }
 
 function finish() {
