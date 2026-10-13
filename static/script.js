@@ -1,16 +1,32 @@
-let questions = [], current = 0, score = 0, streak = 0;
+let questions = [], current = 0, score = 0, streak = 0, points = 0;
+let locked = false;
 
 const TIME = 15;
-let timeLeft, timerId;
+const BASE_POINTS = 100;
+const MAX_BONUS = 50;
+let timeLeft = TIME, timerId;
+
+function updateProgress() {
+  document.getElementById("progress").textContent =
+    `Pytanie ${current + 1} z ${questions.length}  ·  ⭐ ${points} pkt` +
+    (streak >= 2 ? `  ·  🔥 seria: ${streak}` : "");
+}
+
+function showTime() {
+  const fill = document.getElementById("timer-fill");
+  document.getElementById("timer-text").textContent =
+    Math.max(0, Math.ceil(timeLeft)) + " s";
+  fill.style.width = Math.max(0, timeLeft / TIME * 100) + "%";
+  fill.classList.toggle("low", timeLeft <= 5);
+}
 
 function startTimer() {
   clearInterval(timerId);
   timeLeft = TIME;
-  const fill = document.getElementById("timer-fill");
-  fill.style.width = "100%";
+  showTime();
   timerId = setInterval(() => {
     timeLeft -= 0.1;
-    fill.style.width = (timeLeft / TIME * 100) + "%";
+    showTime();
     if (timeLeft <= 0) {
       clearInterval(timerId);
       answer(-1);
@@ -27,9 +43,7 @@ async function start() {
 function showQuestion() {
   const q = questions[current];
   document.getElementById("question").textContent = q.question;
-  document.getElementById("progress").textContent =
-    `Pytanie ${current + 1} z ${questions.length}` +
-    (streak >= 2 ? `  ·  🔥 seria: ${streak}` : "");
+  updateProgress();
 
   document.getElementById("bar-fill").style.width =
     (current / questions.length * 100) + "%";
@@ -48,22 +62,48 @@ function showQuestion() {
     box.appendChild(btn);
   });
 
+  document.getElementById("feedback").hidden = true;
   document.getElementById("explanation").hidden = true;
+  document.getElementById("next").hidden = true;
   startTimer();
 }
-
-let locked = false;
 
 function answer(i) {
   if (locked) return;
   locked = true;
+  clearInterval(timerId);
 
-  const correct = questions[current].correct;
+  const q = questions[current];
   const buttons = document.querySelectorAll("#answers button");
+  const fb = document.getElementById("feedback");
 
-  buttons[correct].classList.add("good");
-  if (i !== correct) buttons[i].classList.add("bad");
-  else score++;
+  buttons[q.correct].classList.add("good");
+
+  if (i === q.correct) {
+    const bonus = Math.round(Math.max(0, timeLeft) / TIME * MAX_BONUS);
+    score++;
+    streak++;
+    points += BASE_POINTS + bonus;
+    fb.textContent = `✅ Dobrze! +${BASE_POINTS} pkt, +${bonus} za szybkość`;
+    fb.className = "good";
+  } else if (i === -1) {
+    streak = 0;
+    fb.textContent = "⏰ Czas minął!";
+    fb.className = "bad";
+  } else {
+    streak = 0;
+    buttons[i].classList.add("bad");
+    fb.textContent = "❌ Niestety źle";
+    fb.className = "bad";
+  }
+  fb.hidden = false;
+  updateProgress();
+
+  if (q.explanation) {
+    const el = document.getElementById("explanation");
+    el.textContent = "💡 " + q.explanation;
+    el.hidden = false;
+  }
 
   const next = document.getElementById("next");
   next.textContent =
@@ -74,8 +114,14 @@ function answer(i) {
 function finish() {
   document.getElementById("quiz").hidden = true;
   document.getElementById("end").hidden = false;
+
+  const p = score / questions.length;
+  const msg = p === 1 ? "Perfekcyjnie! 🏆"
+            : p >= 0.7 ? "Świetnie! 🔥"
+            : p >= 0.4 ? "Nieźle, spróbuj jeszcze raz"
+            : "Trochę ćwiczeń i będzie dobrze 😄";
   document.getElementById("result").textContent =
-    `Wynik: ${score} / ${questions.length}`;
+    `Wynik: ${score} / ${questions.length}  ·  ⭐ ${points} pkt — ${msg}`;
   loadRanking();
 }
 
@@ -84,7 +130,7 @@ document.getElementById("save").addEventListener("click", async () => {
   await fetch("/api/score", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, score, total: questions.length }),
+    body: JSON.stringify({ name, score, total: questions.length, points }),
   });
   loadRanking();
 });
@@ -96,12 +142,11 @@ async function loadRanking() {
   list.innerHTML = "";
   data.forEach((r) => {
     const li = document.createElement("li");
-    li.textContent = `${r.name}: ${r.score}/${r.total} (${r.date})`;
+    li.textContent =
+      `${r.name}: ⭐ ${r.points ?? 0} pkt (${r.score}/${r.total}) — ${r.date}`;
     list.appendChild(li);
   });
 }
-
-start();
 
 document.getElementById("next").addEventListener("click", () => {
   document.getElementById("next").hidden = true;
@@ -110,3 +155,19 @@ document.getElementById("next").addEventListener("click", () => {
   if (current < questions.length) showQuestion();
   else finish();
 });
+
+document.addEventListener("keydown", (e) => {
+  if (document.getElementById("quiz").hidden) return;
+  const key = e.key.toLowerCase();
+
+  if (!locked && ["a", "b", "c", "d"].includes(key)) {
+    const idx = key.charCodeAt(0) - 97;
+    const count = document.querySelectorAll("#answers button").length;
+    if (idx < count) answer(idx);
+  } else if (locked && (e.key === "Enter" || e.key === " ")) {
+    e.preventDefault();
+    document.getElementById("next").click();
+  }
+});
+
+start();
