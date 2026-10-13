@@ -2,36 +2,48 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Quiz</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<div class="card">
-  <h1>Quiz</h1>
+  <div class="card">
 
-<div id="quiz">
-  <div class="bar"><div id="bar-fill"></div></div>
-  <p id="progress"></p>
-  <div class="timer-row">
-    <div class="timer"><div id="timer-fill"></div></div>
-    <span id="timer-text">15 s</span>
-  </div>
-  <h2 id="question"></h2>
-  <div id="answers"></div>
-  <p id="feedback" hidden></p>
-  <p id="explanation" hidden></p>
-  <button id="next" hidden>Dalej →</button>
-</div>
+    <div class="top">
+      <div class="logo-title">
+      <span class="logo">📱</span>
+      <h1 data-i18n="title"></h1>
+      </div>
+      <div class="lang">
+        <button data-lang="pl">PL</button>
+        <button data-lang="en">EN</button>
+      </div>
+    </div>
 
-  <div id="end" hidden>
-    <h2 id="result"></h2>
-    <input id="name" placeholder="Twoje imię">
-    <button id="save">Zapisz wynik</button>
-    <button id="again" onclick="location.reload()">Zagraj jeszcze raz</button>
-    <h3>Ranking</h3>
-    <ol id="ranking"></ol>
+    <div id="quiz">
+      <div class="bar"><div id="bar-fill"></div></div>
+      <p id="progress"></p>
+      <div class="timer-row">
+        <div class="timer"><div id="timer-fill"></div></div>
+        <span id="timer-text"></span>
+      </div>
+      <h2 id="question"></h2>
+      <div id="answers"></div>
+      <p id="feedback" hidden></p>
+      <p id="explanation" hidden></p>
+      <button id="next" hidden></button>
+    </div>
+
+    <div id="end" hidden>
+      <h2 id="result"></h2>
+      <input id="name" data-i18n-placeholder="namePlaceholder">
+      <button id="save" data-i18n="save"></button>
+      <button id="again" data-i18n="again"></button>
+      <h3 data-i18n="ranking"></h3>
+      <ol id="ranking"></ol>
+    </div>
+
   </div>
-</div>
   <script src="/static/script.js"></script>
 </body>
 </html>

@@ -15,9 +15,14 @@ def load_json(path, default):
 def index():
     return render_template("index.html")
 
+LANGS = ["pl", "en"]
+
 @app.route("/api/questions")
 def questions():
-    qs = load_json("questions.json", [])
+    lang = request.args.get("lang", "pl")
+    if lang not in LANGS:
+        lang = "pl"
+    qs = load_json(f"questions_{lang}.json", [])
     random.shuffle(qs)
     return jsonify(qs[:15])
 
