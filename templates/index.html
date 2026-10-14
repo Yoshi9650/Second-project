@@ -26,18 +26,24 @@
           <h1 data-i18n="title"></h1>
           <!-- Liczba pytań w bazie: wypełnia JS po pobraniu danych z Flaska -->
           <p id="db-info"></p>
-        </div>
-      </div>
-
-      <!-- Przyciski zmiany języka: data-lang mówi JS, który język wybrać -->
-      <div class="lang">
-        <button data-lang="pl">PL</button>
-        <button data-lang="en">EN</button>
-      </div>
+    </div>
+   </div>
+   <!-- ===== EKRAN STARTOWY: wybór języka i przycisk Start ===== -->
+   <div id="start-screen">
+   <!-- Napis "Wybierz język" (tekst wpisuje JS przez data-i18n) -->
+   <p id="lang-label" data-i18n="chooseLang"></p>
+    <!-- Przyciski języka; data-lang mówi JS, który język wybrać -->
+     <div class="lang">
+      <button data-lang="pl">PL</button>
+     <button data-lang="en">EN</button>
+  </div>
+  <!-- Przycisk rozpoczynający quiz -->
+  <button id="start-btn" data-i18n="start"></button>
+</div>
     </div>
 
     <!-- ===== EKRAN QUIZU: widoczny podczas gry ===== -->
-    <div id="quiz">
+    <div id="quiz" hidden>
       <!-- Pasek postępu quizu (zewnętrzny pasek + wypełnienie, którym steruje JS) -->
       <div class="bar"><div id="bar-fill"></div></div>
       <!-- Napis "Pytanie X z Y", punkty i seria -->

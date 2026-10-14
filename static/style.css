@@ -367,3 +367,52 @@ h1 {
   border-radius: 999px;             /* kształt pigułki */
   background: linear-gradient(135deg, var(--akcent-1), var(--akcent-2));
 }
+
+/* =====================================================
+   EKRAN STARTOWY
+   ===================================================== */
+#start-screen {
+  display: flex;
+  flex-direction: column;     /* elementy jeden pod drugim */
+  align-items: center;        /* wyśrodkowane w poziomie */
+  gap: 20px;
+  padding: 24px 0 8px;
+  animation: pojawianie 0.4s ease;
+}
+/* display: flex nadpisuje atrybut hidden, więc trzeba go przywrócić ręcznie */
+#start-screen[hidden] {
+  display: none;
+}
+
+/* Napis "Wybierz język" */
+#lang-label {
+  margin: 0;
+  font-size: 14px;
+  color: var(--tekst-przyciemniony);
+}
+
+/* Przyciski języka na ekranie startowym są większe niż w dawnym nagłówku */
+#start-screen .lang {
+  gap: 10px;
+}
+#start-screen .lang button {
+  padding: 10px 22px;
+  font-size: 16px;
+}
+
+/* Duży przycisk Start */
+#start-btn {
+  padding: 16px 48px;
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--akcent-1), var(--akcent-2));
+  transition: transform 0.2s, filter 0.2s;
+}
+#start-btn:hover {
+  transform: translateY(-2px) scale(1.03);   /* unosi się i lekko rośnie */
+  filter: brightness(1.1);                   /* robi się jaśniejszy */
+}

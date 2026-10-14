@@ -26,6 +26,8 @@ const TEXTS = {
     ranking: "Ranking",
     noQuestions: "Brak pytań dla tego języka.",
     dbSize: "Pytań w bazie: {n}",
+    chooseLang: "Wybierz język",
+    start: "Start",
   },
   en: {
     title: "Tech Quiz",
@@ -49,6 +51,8 @@ const TEXTS = {
     ranking: "Leaderboard",
     noQuestions: "No questions found for this language.",
     dbSize: "Questions in database: {n}",
+    chooseLang: "Choose language",
+    start: "Start",
   },
 };
  
@@ -87,13 +91,14 @@ function applyTexts() {
   });
 }
  
-// Zmiana języka: zapamiętuje wybór, tłumaczy interfejs i zaczyna quiz od nowa
+// Zmiana języka (możliwa tylko na ekranie startowym):
+// zapamiętuje wybór, tłumaczy interfejs i odświeża liczbę pytań dla nowego języka
 function setLanguage(l) {
-  if (l === lang) return;            // ten sam język, nic nie robimy
+  if (l === lang) return;             // ten sam język, nic nie robimy
   lang = l;
   localStorage.setItem("lang", lang); // zapis w przeglądarce, żeby wybór przetrwał odświeżenie
   applyTexts();
-  resetQuiz();
+  showDbSize();                       // w innym języku może być inna liczba pytań
 }
  
 /* =====================================================
@@ -192,13 +197,14 @@ async function start() {
   showQuestion();
 }
  
-// Zeruje wszystkie liczniki i zaczyna quiz od początku
+// Wraca na ekran startowy: zeruje liczniki i ukrywa quiz oraz ekran końcowy
 function resetQuiz() {
-  clearInterval(timerId);
+  clearQuizView();                                    // czyści widok i zatrzymuje timer
   current = 0; score = 0; streak = 0; points = 0; locked = false;
-  document.getElementById("quiz").hidden = false;   // pokaż ekran quizu
-  document.getElementById("end").hidden = true;     // ukryj ekran końcowy
-  start();
+  document.getElementById("quiz").hidden = true;      // ukryj quiz
+  document.getElementById("end").hidden = true;       // ukryj ekran końcowy
+  document.getElementById("start-screen").hidden = false;   // pokaż ekran startowy
+  showDbSize();                                       // odśwież liczbę pytań
 }
  
 /* =====================================================
@@ -371,8 +377,14 @@ document.addEventListener("keydown", (e) => {
   }
 });
  
-/* =====================================================
-   START PROGRAMU
-   ===================================================== */
-applyTexts();   // wpisz tłumaczenia w interfejs
-start();        // pobierz pytania i zacznij quiz
+// Na starcie tylko tłumaczymy interfejs i pokazujemy liczbę pytań.
+// Quiz rusza dopiero po kliknięciu przycisku Start (poniżej).
+applyTexts();
+showDbSize();
+
+// Przycisk Start: chowa ekran startowy (a z nim wybór języka), pokazuje quiz i go uruchamia
+document.getElementById("start-btn").addEventListener("click", () => {
+  document.getElementById("start-screen").hidden = true;
+  document.getElementById("quiz").hidden = false;
+  start();
+});
