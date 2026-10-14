@@ -1,6 +1,6 @@
 const TEXTS = {
   pl: {
-    title: "📱 Quiz o technologii",
+    title: "Quiz o technologii",
     question: "Pytanie {n} z {total}",
     pts: "pkt",
     streak: "seria",
@@ -23,7 +23,7 @@ const TEXTS = {
     dbSize: "Pytań w bazie: {n}",
   },
   en: {
-    title: "📱 Tech Quiz",
+    title: "Tech Quiz",
     question: "Question {n} of {total}",
     pts: "pts",
     streak: "streak",
