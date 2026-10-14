@@ -9,16 +9,19 @@
 <body>
   <div class="card">
 
-    <div class="top">
-      <div class="logo-title">
+  <div class="top">
+    <div class="logo-title">
       <span class="logo">📱</span>
-      <h1 data-i18n="title"></h1>
-      </div>
-      <div class="lang">
-        <button data-lang="pl">PL</button>
-        <button data-lang="en">EN</button>
-      </div>
+     <div class="titles">
+        <h1 data-i18n="title"></h1>
+        <p id="db-info"></p>
+     </div>
+   </div>
+   <div class="lang">
+     <button data-lang="pl">PL</button>
+     <button data-lang="en">EN</button>
     </div>
+  </div>
 
     <div id="quiz">
       <div class="bar"><div id="bar-fill"></div></div>
@@ -42,8 +45,9 @@
       <h3 data-i18n="ranking"></h3>
       <ol id="ranking"></ol>
     </div>
-
+    
   </div>
+
   <script src="/static/script.js"></script>
 </body>
 </html>

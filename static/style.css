@@ -292,3 +292,24 @@ h1 {
 .logo {
   font-size: 32px;
 }
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.titles h1 {
+  margin: 0;
+}
+
+#db-info {
+  margin: 0;
+  width: fit-content;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  background: linear-gradient(90deg, var(--akcent-1), var(--akcent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

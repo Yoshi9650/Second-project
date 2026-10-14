@@ -20,6 +20,7 @@ const TEXTS = {
     anonymous: "Anonim",
     ranking: "Ranking",
     noQuestions: "Brak pytań dla tego języka.",
+    dbSize: "Pytań w bazie: {n}",
   },
   en: {
     title: "📱 Tech Quiz",
@@ -42,6 +43,7 @@ const TEXTS = {
     anonymous: "Anonymous",
     ranking: "Leaderboard",
     noQuestions: "No questions found for this language.",
+    dbSize: "Questions in database: {n}",
   },
 };
 
@@ -127,8 +129,16 @@ function clearQuizView() {
   document.getElementById("next").hidden = true;
 }
 
+async function showDbSize() {
+  const res = await fetch("/api/count?lang=" + lang);
+  const data = await res.json();
+  document.getElementById("db-info").textContent =
+    t("dbSize", { n: data.count });
+}
+
 async function start() {
   clearQuizView();
+  showDbSize();
   const res = await fetch("/api/questions?lang=" + lang);
   questions = await res.json();
 

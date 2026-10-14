@@ -24,6 +24,13 @@ def questions():
     random.shuffle(qs)
     return jsonify(qs[:20])
 
+@app.route("/api/count")
+def count():
+    lang = request.args.get("lang", "pl")
+    if lang not in LANGS:
+        lang = "pl"
+    return jsonify({"count": len(load_json(f"questions_{lang}.json", []))})
+
 @app.route("/api/score", methods=["POST"])
 def save_score():
     data = request.get_json()
