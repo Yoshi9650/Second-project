@@ -39,11 +39,20 @@
   </div>
   <!-- Przycisk rozpoczynający quiz -->
   <button id="start-btn" data-i18n="start"></button>
+  <!-- Stopka ekranu startowego: autor i link do GitHuba -->
+<div class="footer">
+  <span>© Michał Kuczyński 2026</span>
+  <!-- Zamień adres w href na link do swojego repozytorium -->
+  <a id="github-link" href="https://github.com/Yoshi9650"
+     target="_blank" rel="noopener noreferrer">GitHub</a>
+</div>
 </div>
     </div>
 
     <!-- ===== EKRAN QUIZU: widoczny podczas gry ===== -->
     <div id="quiz" hidden>
+      <!-- Przycisk pauzy (podczas pauzy jest ukryty razem z resztą quizu) -->
+      <button id="pause-btn" data-i18n="pause"></button>
       <!-- Pasek postępu quizu (zewnętrzny pasek + wypełnienie, którym steruje JS) -->
       <div class="bar"><div id="bar-fill"></div></div>
       <!-- Napis "Pytanie X z Y", punkty i seria -->
@@ -66,6 +75,11 @@
       <p id="explanation" hidden></p>
       <!-- Przycisk przejścia do następnego pytania, pokazywany po odpowiedzi -->
       <button id="next" hidden></button>
+      <!-- Ekran pauzy: widoczny tylko wtedy, gdy quiz jest wstrzymany -->
+      <div id="pause-screen" hidden>
+       <h2 id="pause-title" data-i18n="paused"></h2>
+        <button id="resume-btn" data-i18n="resume"></button>
+      </div>
     </div>
 
     <!-- ===== EKRAN KOŃCOWY: ukryty, JS pokazuje go po ostatnim pytaniu ===== -->

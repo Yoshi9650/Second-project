@@ -28,6 +28,9 @@ const TEXTS = {
     dbSize: "Pytań w bazie: {n}",
     chooseLang: "Wybierz język",
     start: "Start",
+    pause: "⏸ Pauza",
+    paused: "Pauza",
+    resume: "▶ Wznów",
   },
   en: {
     title: "Tech Quiz",
@@ -53,6 +56,9 @@ const TEXTS = {
     dbSize: "Questions in database: {n}",
     chooseLang: "Choose language",
     start: "Start",
+    pause: "⏸ Pause",
+    paused: "Paused",
+    resume: "▶ Resume",
   },
 };
  
@@ -111,6 +117,7 @@ let score = 0;        // liczba poprawnych odpowiedzi
 let streak = 0;       // seria poprawnych odpowiedzi z rzędu
 let points = 0;       // punkty (z bonusem za szybkość)
 let locked = false;   // true = odpowiedź już udzielona, kolejne kliknięcia ignorujemy
+let paused = false;   // true = quiz wstrzymany (pytanie ukryte, czas stoi)
  
 const TIME = 15;          // sekundy na jedno pytanie
 const BASE_POINTS = 100;  // punkty za dobrą odpowiedź
@@ -140,11 +147,10 @@ function showTime() {
   fill.classList.toggle("low", timeLeft <= 5); // klasa "low" robi pasek czerwonym przy 5 s i mniej
 }
  
-// Uruchamia odliczanie dla nowego pytania
-function startTimer() {
+// Uruchamia odliczanie od aktualnej wartości timeLeft (bez zerowania).
+// Używane przy starcie pytania i przy wznowieniu po pauzie.
+function runTimer() {
   clearInterval(timerId);   // zatrzymujemy poprzedni timer, żeby nie chodziły dwa naraz
-  timeLeft = TIME;
-  showTime();
   // co 100 ms (0,1 s) zmniejszamy czas i odświeżamy pasek
   timerId = setInterval(() => {
     timeLeft -= 0.1;
@@ -154,6 +160,13 @@ function startTimer() {
       answer(-1);           // -1 = brak odpowiedzi, czas minął
     }
   }, 100);
+}
+
+// Zaczyna odliczanie dla nowego pytania: ustawia pełny czas i uruchamia timer
+function startTimer() {
+  timeLeft = TIME;
+  showTime();
+  runTimer();
 }
  
 // Czyści ekran quizu z pozostałości po poprzednim pytaniu
@@ -199,6 +212,10 @@ async function start() {
  
 // Wraca na ekran startowy: zeruje liczniki i ukrywa quiz oraz ekran końcowy
 function resetQuiz() {
+    // wyłączamy pauzę, jeśli była włączona
+  paused = false;
+  document.getElementById("quiz").classList.remove("paused");
+  document.getElementById("pause-screen").hidden = true;
   clearQuizView();                                    // czyści widok i zatrzymuje timer
   current = 0; score = 0; streak = 0; points = 0; locked = false;
   document.getElementById("quiz").hidden = true;      // ukryj quiz
@@ -362,15 +379,41 @@ document.querySelectorAll(".lang button").forEach((b) => {
   b.addEventListener("click", () => setLanguage(b.dataset.lang));
 });
  
-// Obsługa klawiatury: A, B, C, D wybierają odpowiedź, Enter lub spacja idą dalej
+// Włącza i wyłącza pauzę
+function togglePause() {
+  if (document.getElementById("quiz").hidden) return;   // pauza działa tylko podczas quizu
+  paused = !paused;
+
+  // klasa "paused" ukrywa pytanie i odpowiedzi (patrz CSS), a ekran pauzy pokazujemy osobno
+  document.getElementById("quiz").classList.toggle("paused", paused);
+  document.getElementById("pause-screen").hidden = !paused;
+
+  if (paused) {
+    clearInterval(timerId);          // zatrzymujemy czas
+  } else if (!locked) {
+    runTimer();                      // wznawiamy czas, ale tylko jeśli nie odpowiedziano jeszcze na pytanie
+  }
+}
+
+// Przyciski pauzy i wznowienia
+document.getElementById("pause-btn").addEventListener("click", togglePause);
+document.getElementById("resume-btn").addEventListener("click", togglePause);
+
+// Obsługa klawiatury: P = pauza, A-D = odpowiedź, Enter lub spacja = dalej
 document.addEventListener("keydown", (e) => {
-  if (document.getElementById("quiz").hidden) return;   // na ekranie końcowym klawisze nie działają
+  if (document.getElementById("quiz").hidden) return;   // poza quizem klawisze nie działają
   const key = e.key.toLowerCase();
- 
+
+  if (key === "p") {                 // P włącza i wyłącza pauzę
+    togglePause();
+    return;
+  }
+  if (paused) return;                // podczas pauzy pozostałe klawisze są zablokowane
+
   if (!locked && ["a", "b", "c", "d"].includes(key)) {
-    const idx = key.charCodeAt(0) - 97;   // kod litery "a" to 97, więc a=0, b=1, c=2, d=3
+    const idx = key.charCodeAt(0) - 97;   // a=0, b=1, c=2, d=3
     const count = document.querySelectorAll("#answers button").length;
-    if (idx < count) answer(idx);         // ignorujemy literę, jeśli pytanie ma mniej odpowiedzi
+    if (idx < count) answer(idx);
   } else if (locked && (e.key === "Enter" || e.key === " ")) {
     e.preventDefault();                   // spacja nie przewija strony
     document.getElementById("next").click();

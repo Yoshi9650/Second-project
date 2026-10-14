@@ -401,7 +401,7 @@ h1 {
 }
 
 /* Duży przycisk Start */
-#start-btn {
+#start-btn, #resume-btn {
   padding: 16px 48px;
   font-size: 20px;
   font-weight: 700;
@@ -412,7 +412,73 @@ h1 {
   background: linear-gradient(135deg, var(--akcent-1), var(--akcent-2));
   transition: transform 0.2s, filter 0.2s;
 }
-#start-btn:hover {
+#start-btn:hover, #resume-btn:hover {
   transform: translateY(-2px) scale(1.03);   /* unosi się i lekko rośnie */
   filter: brightness(1.1);                   /* robi się jaśniejszy */
+}
+
+/* =====================================================
+   PAUZA
+   ===================================================== */
+
+/* Mały przycisk pauzy w prawym górnym rogu quizu */
+#pause-btn {
+  display: block;
+  margin: 0 0 16px auto;          /* auto przesuwa przycisk na prawą stronę */
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--tekst);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+#pause-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Gdy quiz ma klasę "paused" (dodaje ją JS), ukrywamy wszystko oprócz ekranu pauzy.
+   Dzięki temu nie widać pytania ani odpowiedzi. */
+#quiz.paused > *:not(#pause-screen) {
+  display: none;
+}
+
+/* Ekran pauzy */
+#pause-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px 0;
+  animation: pojawianie 0.3s ease;
+}
+#pause-screen[hidden] {            /* display: flex nadpisuje hidden, więc przywracamy je ręcznie */
+  display: none;
+}
+#pause-title {
+  margin: 0;
+  font-size: 28px;
+}
+
+/* =====================================================
+   STOPKA EKRANU STARTOWEGO (autor i link do GitHuba)
+   ===================================================== */
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--tekst-przyciemniony);
+}
+.footer a {
+  color: var(--akcent-1);
+  font-weight: 700;
+  text-decoration: none;
+}
+.footer a:hover {
+  text-decoration: underline;     /* podkreślenie po najechaniu */
 }
