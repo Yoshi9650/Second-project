@@ -1,3 +1,8 @@
+/* =====================================================
+   TŁUMACZENIA
+   Słownik z napisami interfejsu w dwóch językach.
+   Zapis {n} to miejsce, w które funkcja t() wstawia wartość.
+   ===================================================== */
 const TEXTS = {
   pl: {
     title: "Quiz o technologii",
@@ -46,10 +51,14 @@ const TEXTS = {
     dbSize: "Questions in database: {n}",
   },
 };
-
+ 
+// Aktualny język: najpierw sprawdzamy, czy przeglądarka go zapamiętała (localStorage),
+// a jeśli nie, wybieramy "pl" gdy przeglądarka jest po polsku, w przeciwnym razie "en"
 let lang = localStorage.getItem("lang") ||
   (navigator.language.startsWith("pl") ? "pl" : "en");
-
+ 
+// Zwraca napis o podanym kluczu w aktualnym języku.
+// vars to obiekt z wartościami do podstawienia, np. t("question", { n: 1, total: 15 })
 function t(key, vars = {}) {
   let s = TEXTS[lang][key];
   for (const name in vars) {
@@ -57,65 +66,92 @@ function t(key, vars = {}) {
   }
   return s;
 }
-
+ 
+// Wpisuje tłumaczenia we wszystkie elementy HTML oznaczone atrybutami data-i18n
 function applyTexts() {
   document.documentElement.lang = lang;
+ 
+  // zwykłe teksty (nagłówki, przyciski)
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     el.textContent = t(el.dataset.i18n);
   });
+ 
+  // podpowiedzi w polach tekstowych (placeholder)
   document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
     el.placeholder = t(el.dataset.i18nPlaceholder);
   });
+ 
+  // podświetlenie przycisku aktywnego języka (klasa "active" ma styl w CSS)
   document.querySelectorAll(".lang button").forEach((b) => {
     b.classList.toggle("active", b.dataset.lang === lang);
   });
 }
-
+ 
+// Zmiana języka: zapamiętuje wybór, tłumaczy interfejs i zaczyna quiz od nowa
 function setLanguage(l) {
-  if (l === lang) return;
+  if (l === lang) return;            // ten sam język, nic nie robimy
   lang = l;
-  localStorage.setItem("lang", lang);
+  localStorage.setItem("lang", lang); // zapis w przeglądarce, żeby wybór przetrwał odświeżenie
   applyTexts();
   resetQuiz();
 }
-
-let questions = [], current = 0, score = 0, streak = 0, points = 0;
-let locked = false;
-
-const TIME = 15;
-const BASE_POINTS = 100;
-const MAX_BONUS = 50;
-let timeLeft = TIME, timerId;
-
+ 
+/* =====================================================
+   STAN QUIZU
+   Zmienne, w których quiz "pamięta", co się dzieje
+   ===================================================== */
+let questions = [];   // lista pytań pobrana z serwera
+let current = 0;      // numer aktualnego pytania (0 = pierwsze)
+let score = 0;        // liczba poprawnych odpowiedzi
+let streak = 0;       // seria poprawnych odpowiedzi z rzędu
+let points = 0;       // punkty (z bonusem za szybkość)
+let locked = false;   // true = odpowiedź już udzielona, kolejne kliknięcia ignorujemy
+ 
+const TIME = 15;          // sekundy na jedno pytanie
+const BASE_POINTS = 100;  // punkty za dobrą odpowiedź
+const MAX_BONUS = 50;     // maksymalny bonus za szybkość
+let timeLeft = TIME;      // ile sekund zostało
+let timerId;              // numer timera, potrzebny do jego zatrzymania
+ 
+/* =====================================================
+   WIDOK: postęp i czas
+   ===================================================== */
+ 
+// Napis "Pytanie X z Y · punkty · seria"
 function updateProgress() {
   document.getElementById("progress").textContent =
     t("question", { n: current + 1, total: questions.length }) +
     `  ·  ⭐ ${points} ${t("pts")}` +
+    // serię pokazujemy dopiero od 2 poprawnych odpowiedzi z rzędu
     (streak >= 2 ? `  ·  🔥 ${t("streak")}: ${streak}` : "");
 }
-
+ 
+// Odświeża pasek czasu i liczbę sekund obok niego
 function showTime() {
   const fill = document.getElementById("timer-fill");
   document.getElementById("timer-text").textContent =
-    Math.max(0, Math.ceil(timeLeft)) + " s";
+    Math.max(0, Math.ceil(timeLeft)) + " s";   // ceil zaokrągla w górę, max nie pozwala zejść poniżej 0
   fill.style.width = Math.max(0, timeLeft / TIME * 100) + "%";
-  fill.classList.toggle("low", timeLeft <= 5);
+  fill.classList.toggle("low", timeLeft <= 5); // klasa "low" robi pasek czerwonym przy 5 s i mniej
 }
-
+ 
+// Uruchamia odliczanie dla nowego pytania
 function startTimer() {
-  clearInterval(timerId);
+  clearInterval(timerId);   // zatrzymujemy poprzedni timer, żeby nie chodziły dwa naraz
   timeLeft = TIME;
   showTime();
+  // co 100 ms (0,1 s) zmniejszamy czas i odświeżamy pasek
   timerId = setInterval(() => {
     timeLeft -= 0.1;
     showTime();
     if (timeLeft <= 0) {
       clearInterval(timerId);
-      answer(-1);
+      answer(-1);           // -1 = brak odpowiedzi, czas minął
     }
   }, 100);
 }
-
+ 
+// Czyści ekran quizu z pozostałości po poprzednim pytaniu
 function clearQuizView() {
   clearInterval(timerId);
   document.getElementById("question").textContent = "";
@@ -128,75 +164,97 @@ function clearQuizView() {
   document.getElementById("explanation").hidden = true;
   document.getElementById("next").hidden = true;
 }
-
+ 
+/* =====================================================
+   POBIERANIE DANYCH Z SERWERA (Flask)
+   ===================================================== */
+ 
+// Pobiera liczbę pytań w bazie i wyświetla ją pod tytułem
 async function showDbSize() {
   const res = await fetch("/api/count?lang=" + lang);
   const data = await res.json();
   document.getElementById("db-info").textContent =
     t("dbSize", { n: data.count });
 }
-
+ 
+// Rozpoczyna quiz: czyści widok, pobiera pytania i pokazuje pierwsze
 async function start() {
   clearQuizView();
   showDbSize();
   const res = await fetch("/api/questions?lang=" + lang);
   questions = await res.json();
-
+ 
+  // brak pytań w tym języku: pokazujemy komunikat i kończymy
   if (questions.length === 0) {
     document.getElementById("question").textContent = t("noQuestions");
     return;
   }
   showQuestion();
 }
-
+ 
+// Zeruje wszystkie liczniki i zaczyna quiz od początku
 function resetQuiz() {
   clearInterval(timerId);
   current = 0; score = 0; streak = 0; points = 0; locked = false;
-  document.getElementById("quiz").hidden = false;
-  document.getElementById("end").hidden = true;
+  document.getElementById("quiz").hidden = false;   // pokaż ekran quizu
+  document.getElementById("end").hidden = true;     // ukryj ekran końcowy
   start();
 }
-
+ 
+/* =====================================================
+   PYTANIA I ODPOWIEDZI
+   ===================================================== */
+ 
+// Wyświetla aktualne pytanie i przyciski z odpowiedziami
 function showQuestion() {
   const q = questions[current];
   document.getElementById("question").textContent = q.question;
   updateProgress();
-
+ 
+  // pasek postępu quizu: ile pytań już za nami
   document.getElementById("bar-fill").style.width =
     (current / questions.length * 100) + "%";
-
+ 
+  // Ponowne odtworzenie animacji pytania: usuwamy klasę, wymuszamy przeliczenie
+  // układu (offsetWidth) i dodajemy klasę z powrotem. Bez tego animacja
+  // odtworzyłaby się tylko za pierwszym razem.
   const qEl = document.getElementById("question");
   qEl.classList.remove("anim");
   void qEl.offsetWidth;
   qEl.classList.add("anim");
-
+ 
+  // Tworzymy przycisk dla każdej odpowiedzi
   const box = document.getElementById("answers");
-  box.innerHTML = "";
+  box.innerHTML = "";                       // usuwamy stare przyciski
   q.answers.forEach((text, i) => {
     const btn = document.createElement("button");
     btn.textContent = text;
-    btn.addEventListener("click", () => answer(i));
+    btn.addEventListener("click", () => answer(i));   // i = numer klikniętej odpowiedzi
     box.appendChild(btn);
   });
-
+ 
+  // chowamy komunikaty z poprzedniego pytania i uruchamiamy czas
   document.getElementById("feedback").hidden = true;
   document.getElementById("explanation").hidden = true;
   document.getElementById("next").hidden = true;
   startTimer();
 }
-
+ 
+// Obsługa odpowiedzi. i = numer klikniętej odpowiedzi, a -1 oznacza brak odpowiedzi (koniec czasu)
 function answer(i) {
-  if (locked) return;
+  if (locked) return;       // odpowiedź już była, ignorujemy kolejne kliknięcia
   locked = true;
-  clearInterval(timerId);
-
+  clearInterval(timerId);   // zatrzymujemy czas
+ 
   const q = questions[current];
   const buttons = document.querySelectorAll("#answers button");
   const fb = document.getElementById("feedback");
-
+ 
+  // zawsze zaznaczamy poprawną odpowiedź na zielono
   buttons[q.correct].classList.add("good");
-
+ 
   if (i === q.correct) {
+    // DOBRA odpowiedź: bonus zależy od tego, ile czasu zostało
     const bonus = Math.round(Math.max(0, timeLeft) / TIME * MAX_BONUS);
     score++;
     streak++;
@@ -204,10 +262,12 @@ function answer(i) {
     fb.textContent = t("correct", { base: BASE_POINTS, bonus: bonus });
     fb.className = "good";
   } else if (i === -1) {
+    // KONIEC CZASU: brak punktów, seria przerwana
     streak = 0;
     fb.textContent = t("timeout");
     fb.className = "bad";
   } else {
+    // ZŁA odpowiedź: kliknięty przycisk robi się czerwony
     streak = 0;
     buttons[i].classList.add("bad");
     fb.textContent = t("wrong");
@@ -215,24 +275,31 @@ function answer(i) {
   }
   fb.hidden = false;
   updateProgress();
-
+ 
+  // wyjaśnienie pokazujemy tylko wtedy, gdy pytanie ma pole "explanation"
   if (q.explanation) {
     const el = document.getElementById("explanation");
     el.textContent = "💡 " + q.explanation;
     el.hidden = false;
   }
-
+ 
+  // przycisk "Dalej", a na ostatnim pytaniu "Zobacz wynik"
   const next = document.getElementById("next");
   next.textContent =
     current + 1 < questions.length ? t("next") : t("seeResult");
   next.hidden = false;
 }
-
+ 
+/* =====================================================
+   EKRAN KOŃCOWY I RANKING
+   ===================================================== */
+ 
+// Pokazuje wynik końcowy z komentarzem zależnym od procentu poprawnych odpowiedzi
 function finish() {
   document.getElementById("quiz").hidden = true;
   document.getElementById("end").hidden = false;
-
-  const p = score / questions.length;
+ 
+  const p = score / questions.length;   // ułamek poprawnych odpowiedzi (0 do 1)
   const msg = p === 1 ? t("msgPerfect")
             : p >= 0.7 ? t("msgGreat")
             : p >= 0.4 ? t("msgOk")
@@ -241,7 +308,8 @@ function finish() {
     `${t("score")}: ${score} / ${questions.length}  ·  ⭐ ${points} ${t("pts")} — ${msg}`;
   loadRanking();
 }
-
+ 
+// Pobiera ranking z serwera i wyświetla go jako listę
 async function loadRanking() {
   const res = await fetch("/api/results");
   const data = await res.json();
@@ -249,49 +317,62 @@ async function loadRanking() {
   list.innerHTML = "";
   data.forEach((r) => {
     const li = document.createElement("li");
+    // "?? 0" podstawia 0 dla starych wyników zapisanych bez punktów
     li.textContent =
       `${r.name}: ⭐ ${r.points ?? 0} ${t("pts")} (${r.score}/${r.total}) — ${r.date}`;
     list.appendChild(li);
   });
 }
-
+ 
+/* =====================================================
+   REAKCJE NA KLIKNIĘCIA I KLAWISZE
+   ===================================================== */
+ 
+// "Zapisz wynik": wysyła imię i wynik do serwera, potem odświeża ranking
 document.getElementById("save").addEventListener("click", async () => {
-  const name = document.getElementById("name").value || t("anonymous");
+  const name = document.getElementById("name").value || t("anonymous");  // puste pole = "Anonim"
   await fetch("/api/score", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },   // informacja, że wysyłamy JSON
     body: JSON.stringify({ name, score, total: questions.length, points }),
   });
   loadRanking();
 });
-
+ 
+// "Zagraj jeszcze raz"
 document.getElementById("again").addEventListener("click", resetQuiz);
-
+ 
+// "Dalej": przejście do następnego pytania albo na ekran końcowy
 document.getElementById("next").addEventListener("click", () => {
   document.getElementById("next").hidden = true;
-  locked = false;
+  locked = false;       // znów można odpowiadać
   current++;
   if (current < questions.length) showQuestion();
   else finish();
 });
-
+ 
+// Przyciski wyboru języka (PL / EN)
 document.querySelectorAll(".lang button").forEach((b) => {
   b.addEventListener("click", () => setLanguage(b.dataset.lang));
 });
-
+ 
+// Obsługa klawiatury: A, B, C, D wybierają odpowiedź, Enter lub spacja idą dalej
 document.addEventListener("keydown", (e) => {
-  if (document.getElementById("quiz").hidden) return;
+  if (document.getElementById("quiz").hidden) return;   // na ekranie końcowym klawisze nie działają
   const key = e.key.toLowerCase();
-
+ 
   if (!locked && ["a", "b", "c", "d"].includes(key)) {
-    const idx = key.charCodeAt(0) - 97;
+    const idx = key.charCodeAt(0) - 97;   // kod litery "a" to 97, więc a=0, b=1, c=2, d=3
     const count = document.querySelectorAll("#answers button").length;
-    if (idx < count) answer(idx);
+    if (idx < count) answer(idx);         // ignorujemy literę, jeśli pytanie ma mniej odpowiedzi
   } else if (locked && (e.key === "Enter" || e.key === " ")) {
-    e.preventDefault();
+    e.preventDefault();                   // spacja nie przewija strony
     document.getElementById("next").click();
   }
 });
-
-applyTexts();
-start();
+ 
+/* =====================================================
+   START PROGRAMU
+   ===================================================== */
+applyTexts();   // wpisz tłumaczenia w interfejs
+start();        // pobierz pytania i zacznij quiz

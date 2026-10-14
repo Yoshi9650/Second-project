@@ -1,53 +1,87 @@
 <!DOCTYPE html>
+<!-- Informuje przeglądarkę, że to dokument HTML5 -->
 <html lang="pl">
 <head>
+  <!-- Kodowanie znaków: dzięki temu działają polskie litery -->
   <meta charset="UTF-8">
+  <!-- Dopasowuje stronę do szerokości ekranu telefonu -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Tytuł widoczny na karcie przeglądarki -->
   <title>Quiz</title>
+  <!-- Podpięcie pliku ze stylami (wygląd strony) -->
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+
+  <!-- Karta: główny pojemnik, w którym leży cały quiz -->
   <div class="card">
 
-  <div class="top">
-    <div class="logo-title">
-      <span class="logo">📱</span>
-     <div class="titles">
-        <h1 data-i18n="title"></h1>
-        <p id="db-info"></p>
-     </div>
-   </div>
-   <div class="lang">
-     <button data-lang="pl">PL</button>
-     <button data-lang="en">EN</button>
-    </div>
-  </div>
+    <!-- ===== NAGŁÓWEK: logo, tytuł, licznik pytań i przyciski języka ===== -->
+    <div class="top">
+      <div class="logo-title">
+        <!-- Ikonka telefonu obok tytułu (poza h1, żeby gradient jej nie zamalował) -->
+        <span class="logo">📱</span>
+        <div class="titles">
+          <!-- Tytuł: tekst wpisuje JS na podstawie data-i18n (zależnie od języka) -->
+          <h1 data-i18n="title"></h1>
+          <!-- Liczba pytań w bazie: wypełnia JS po pobraniu danych z Flaska -->
+          <p id="db-info"></p>
+        </div>
+      </div>
 
+      <!-- Przyciski zmiany języka: data-lang mówi JS, który język wybrać -->
+      <div class="lang">
+        <button data-lang="pl">PL</button>
+        <button data-lang="en">EN</button>
+      </div>
+    </div>
+
+    <!-- ===== EKRAN QUIZU: widoczny podczas gry ===== -->
     <div id="quiz">
+      <!-- Pasek postępu quizu (zewnętrzny pasek + wypełnienie, którym steruje JS) -->
       <div class="bar"><div id="bar-fill"></div></div>
+      <!-- Napis "Pytanie X z Y", punkty i seria -->
       <p id="progress"></p>
+
+      <!-- Odliczanie czasu: pasek i liczba sekund obok niego -->
       <div class="timer-row">
         <div class="timer"><div id="timer-fill"></div></div>
         <span id="timer-text"></span>
       </div>
+
+      <!-- Treść pytania (wpisuje JS) -->
       <h2 id="question"></h2>
+      <!-- Tu JS tworzy przyciski z odpowiedziami A, B, C -->
       <div id="answers"></div>
+
+      <!-- Komunikat po odpowiedzi ("Dobrze!", "Czas minął!"); hidden = ukryty na starcie -->
       <p id="feedback" hidden></p>
+      <!-- Wyjaśnienie odpowiedzi (jeśli pytanie je ma) -->
       <p id="explanation" hidden></p>
+      <!-- Przycisk przejścia do następnego pytania, pokazywany po odpowiedzi -->
       <button id="next" hidden></button>
     </div>
 
+    <!-- ===== EKRAN KOŃCOWY: ukryty, JS pokazuje go po ostatnim pytaniu ===== -->
     <div id="end" hidden>
+      <!-- Wynik końcowy -->
       <h2 id="result"></h2>
+      <!-- Pole na imię; data-i18n-placeholder = podpowiedź w polu zależna od języka -->
       <input id="name" data-i18n-placeholder="namePlaceholder">
+      <!-- Zapis wyniku do rankingu -->
       <button id="save" data-i18n="save"></button>
+      <!-- Rozpoczęcie quizu od nowa -->
       <button id="again" data-i18n="again"></button>
+
+      <!-- Ranking: lista numerowana (ol), wiersze dodaje JS -->
       <h3 data-i18n="ranking"></h3>
       <ol id="ranking"></ol>
     </div>
-    
-  </div>
 
+  </div>
+  <!-- Koniec karty -->
+
+  <!-- Skrypt na końcu body, bo musi się wykonać, gdy wszystkie elementy już istnieją -->
   <script src="/static/script.js"></script>
 </body>
 </html>

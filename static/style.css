@@ -1,128 +1,158 @@
+/* =====================================================
+   ZMIENNE (kolory używane w całym pliku)
+   Zmieniasz kolor tutaj, a zmienia się wszędzie, gdzie
+   występuje var(--nazwa).
+   ===================================================== */
 :root {
-  --tekst: #f8fafc;
-  --tekst-przyciemniony: #94a3b8;
-  --akcent-1: #bfe02c;
-  --akcent-2: #f472b6;
-  --dobry: #22c55e;
-  --zly: #ef4444;
+  --tekst: #f8fafc;                 /* główny kolor tekstu (prawie biały) */
+  --tekst-przyciemniony: #94a3b8;   /* tekst mniej ważny (szary) */
+  --akcent-1: #bfe02c;              /* pierwszy kolor gradientu (limonkowy) */
+  --akcent-2: #f472b6;              /* drugi kolor gradientu (różowy) */
+  --dobry: #22c55e;                 /* zielony: dobra odpowiedź */
+  --zly: #ef4444;                   /* czerwony: zła odpowiedź */
 }
-
+ 
+/* =====================================================
+   TŁO STRONY I ROZMIESZCZENIE KARTY
+   ===================================================== */
 body {
-  margin: 0;
-  min-height: 100vh;
-  box-sizing: border-box;
+  margin: 0;                  /* usuwa domyślny odstęp przeglądarki */
+  min-height: 100vh;          /* strona co najmniej na całą wysokość okna */
+  box-sizing: border-box;     /* padding wlicza się do wysokości, bez dodatkowego przewijania */
   padding: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: "Segoe UI", Arial, sans-serif;
+  display: flex;              /* układ elastyczny, potrzebny do wyśrodkowania karty */
+  align-items: center;        /* karta na środku w pionie */
+  justify-content: center;    /* karta na środku w poziomie */
+  font-family: "Segoe UI", Arial, sans-serif;   /* przeglądarka bierze pierwszą dostępną czcionkę */
   color: var(--tekst);
+  /* Tło: dwie kolorowe poświaty (radial-gradient) na ciemnym kolorze bazowym */
   background:
     radial-gradient(circle at 15% 20%, rgba(209, 223, 52, 0.55), transparent 45%),
     radial-gradient(circle at 85% 80%, rgba(236, 72, 153, 0.45), transparent 45%),
     #0f172a;
-  background-attachment: fixed;
+  background-attachment: fixed;   /* tło stoi w miejscu przy przewijaniu */
 }
-
+ 
+/* =====================================================
+   ANIMACJA WEJŚCIA
+   Element wjeżdża z lekkiego przesunięcia w górę i staje się widoczny.
+   Używana w wielu miejscach przez "animation: pojawianie ...".
+   ===================================================== */
 @keyframes pojawianie {
   from { opacity: 0; transform: translateY(15px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
+ 
+/* =====================================================
+   KARTA (półprzezroczyste "szkło", w którym leży quiz)
+   ===================================================== */
 .card {
   width: 100%;
-  max-width: 620px;
+  max-width: 620px;                           /* na dużych ekranach karta nie jest szersza */
   padding: 36px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.07);
+  border-radius: 24px;                        /* zaokrąglone rogi */
+  background: rgba(255, 255, 255, 0.07);      /* biały z przezroczystością 7% */
   border: 1px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);                /* rozmywa to, co jest za kartą */
+  -webkit-backdrop-filter: blur(16px);        /* wersja dla Safari */
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); /* cień pod kartą */
   animation: pojawianie 0.6s ease;
 }
-
+ 
+/* Tytuł z kolorowym gradientem w literach */
 h1 {
   margin: 0 0 24px;
   font-size: 36px;
   background: linear-gradient(90deg, var(--akcent-1), var(--akcent-2));
-  -webkit-background-clip: text;
+  -webkit-background-clip: text;   /* przycina tło do kształtu liter */
   background-clip: text;
-  color: transparent;
+  color: transparent;              /* przezroczysty tekst, więc widać gradient */
 }
-
-.bar {
+ 
+/* =====================================================
+   PASEK POSTĘPU QUIZU
+   ===================================================== */
+.bar {                              /* zewnętrzny, szary pasek */
   height: 10px;
   background: rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  overflow: hidden;
+  border-radius: 999px;             /* bardzo duża wartość = całkiem okrągłe końce */
+  overflow: hidden;                 /* wypełnienie nie wychodzi poza zaokrąglenie */
   margin-bottom: 14px;
 }
-#bar-fill {
+#bar-fill {                         /* kolorowe wypełnienie, szerokością steruje JS */
   height: 100%;
   width: 0;
   background: linear-gradient(90deg, var(--akcent-1), var(--akcent-2));
   border-radius: 999px;
-  transition: width 0.4s ease;
+  transition: width 0.4s ease;      /* płynne wydłużanie paska */
 }
-
+ 
+/* Napis "Pytanie X z Y · punkty" */
 #progress {
   color: var(--tekst-przyciemniony);
   margin: 0 0 8px;
   font-size: 14px;
 }
-
+ 
+/* =====================================================
+   TREŚĆ PYTANIA
+   ===================================================== */
 #question {
   font-size: 24px;
-  line-height: 1.35;
+  line-height: 1.35;                /* odstęp między liniami tekstu */
   margin: 8px 0 22px;
 }
-#question.anim {
+#question.anim {                    /* klasę "anim" dodaje JS przy każdym nowym pytaniu */
   animation: pojawianie 0.4s ease;
 }
-
+ 
+/* =====================================================
+   PRZYCISKI Z ODPOWIEDZIAMI
+   ===================================================== */
 #answers {
-  counter-reset: odp;
+  counter-reset: odp;               /* zerujemy licznik, dzięki któremu powstają litery A, B, C */
 }
 #answers button {
-  counter-increment: odp;
-  display: flex;
+  counter-increment: odp;           /* każdy kolejny przycisk zwiększa licznik o 1 */
+  display: flex;                    /* litera i tekst obok siebie */
   align-items: center;
-  gap: 14px;
+  gap: 14px;                        /* odstęp między literą a tekstem */
   width: 100%;
   margin: 12px 0;
   padding: 14px 16px;
   font-size: 17px;
   text-align: left;
   color: var(--tekst);
-  cursor: pointer;
+  cursor: pointer;                  /* kursor w kształcie rączki */
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 14px;
-  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;  /* płynne zmiany przy najechaniu */
   animation: pojawianie 0.4s ease;
 }
-#answers button::before {
-  content: counter(odp, upper-alpha);
-  flex: none;
+#answers button::before {           /* dodatkowy element przed tekstem: kółko z literą */
+  content: counter(odp, upper-alpha);   /* 1 -> A, 2 -> B, 3 -> C */
+  flex: none;                       /* kółko nie jest ściskane */
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 50%;               /* 50% = idealne koło */
   font-weight: 700;
   background: linear-gradient(135deg, var(--akcent-1), var(--akcent-2));
 }
-#answers button:hover {
+#answers button:hover {             /* gdy mysz jest nad przyciskiem */
   background: rgba(255, 255, 255, 0.15);
   border-color: var(--akcent-1);
-  transform: translateX(6px);
+  transform: translateX(6px);       /* lekkie przesunięcie w prawo */
 }
-#answers button:active {
-  transform: scale(0.98);
+#answers button:active {            /* w momencie kliknięcia */
+  transform: scale(0.98);           /* przycisk lekko się zmniejsza */
 }
-
+ 
+/* Kolory po udzieleniu odpowiedzi (klasy dodaje JS).
+   Muszą stać PO regule :hover, żeby ją nadpisać. */
 #answers button.good {
   background: rgba(34, 197, 94, 0.3);
   border-color: var(--dobry);
@@ -131,12 +161,15 @@ h1 {
   background: rgba(239, 68, 68, 0.3);
   border-color: var(--zly);
 }
-
+ 
+/* =====================================================
+   EKRAN KOŃCOWY (wynik, imię, ranking)
+   ===================================================== */
 #result {
   font-size: 30px;
   margin-top: 0;
 }
-#end input {
+#end input {                        /* pole na imię */
   padding: 12px 14px;
   font-size: 16px;
   color: var(--tekst);
@@ -145,10 +178,10 @@ h1 {
   border-radius: 12px;
   margin: 0 8px 8px 0;
 }
-#end input::placeholder {
+#end input::placeholder {           /* szary tekst podpowiedzi w polu */
   color: var(--tekst-przyciemniony);
 }
-#end button {
+#end button {                       /* przyciski "Zapisz wynik" i "Zagraj jeszcze raz" */
   padding: 12px 20px;
   font-size: 16px;
   color: white;
@@ -159,21 +192,25 @@ h1 {
   transition: transform 0.2s, filter 0.2s;
 }
 #end button:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.1);
+  transform: translateY(-2px);      /* przycisk unosi się o 2 px */
+  filter: brightness(1.1);          /* i robi się odrobinę jaśniejszy */
 }
-
+ 
 #ranking {
-  padding-left: 22px;
+  padding-left: 22px;               /* miejsce na numery listy */
 }
 #ranking li {
   padding: 8px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);   /* cienka linia między wynikami */
 }
+ 
+/* =====================================================
+   PRZYCISK "DALEJ"
+   ===================================================== */
 #next {
   display: block;
   margin-top: 20px;
-  margin-left: auto;
+  margin-left: auto;                /* auto przesuwa przycisk na prawą stronę */
   padding: 12px 24px;
   font-size: 16px;
   color: white;
@@ -188,79 +225,94 @@ h1 {
   transform: translateY(-2px);
   filter: brightness(1.1);
 }
+/* display: block nadpisuje atrybut hidden, więc trzeba go przywrócić ręcznie */
 #next[hidden] {
   display: none;
 }
-
-.timer {
+ 
+/* =====================================================
+   PASEK CZASU I WYŚWIETLACZ SEKUND
+   ===================================================== */
+.timer {                            /* zewnętrzny pasek czasu */
   height: 6px;
   background: rgba(255, 255, 255, 0.12);
   border-radius: 999px;
   overflow: hidden;
   margin-bottom: 16px;
 }
-#timer-fill {
+#timer-fill {                       /* wypełnienie, szerokością steruje JS co 0,1 s */
   height: 100%;
   width: 100%;
   background: var(--akcent-2);
   border-radius: 999px;
-  transition: width 0.1s linear;
+  transition: width 0.1s linear;    /* linear = równomierne zmniejszanie bez rozpędzania */
 }
-
+ 
+/* =====================================================
+   WYJAŚNIENIE ODPOWIEDZI
+   ===================================================== */
 #explanation {
   margin: 16px 0 0;
   padding: 12px 14px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.08);
-  border-left: 4px solid var(--akcent-1);
+  border-left: 4px solid var(--akcent-1);   /* kolorowy pasek z lewej strony */
   animation: pojawianie 0.3s ease;
 }
-#explanation[hidden] {
+#explanation[hidden] {              /* ten sam powód co przy #next[hidden] */
   display: none;
 }
-
+ 
+/* Wiersz z paskiem czasu i liczbą sekund obok niego */
 .timer-row {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 16px;
 }
-.timer-row .timer {
+.timer-row .timer {                 /* pasek zajmuje całe wolne miejsce, odstęp robi .timer-row */
   flex: 1;
   margin-bottom: 0;
 }
-#timer-text {
+#timer-text {                       /* liczba sekund */
   min-width: 48px;
   text-align: right;
   font-weight: 700;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums;   /* cyfry o stałej szerokości, więc tekst nie "skacze" */
 }
-#timer-fill.low {
+#timer-fill.low {                   /* klasę "low" dodaje JS przy 5 s i mniej */
   background: var(--zly);
 }
-
+ 
+/* =====================================================
+   KOMUNIKAT PO ODPOWIEDZI ("Dobrze!", "Czas minął!")
+   ===================================================== */
 #feedback {
   margin: 16px 0 0;
   font-size: 18px;
   font-weight: 600;
   animation: pojawianie 0.3s ease;
 }
-#feedback.good { color: #86efac; }
-#feedback.bad  { color: #fca5a5; }
+#feedback.good { color: #86efac; }   /* jasnozielony */
+#feedback.bad  { color: #fca5a5; }   /* jasnoczerwony */
 #feedback[hidden] {
   display: none;
 }
-
+ 
+/* =====================================================
+   NAGŁÓWEK: tytuł po lewej, przyciski języka po prawej
+   ===================================================== */
 .top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-between;   /* rozsuwa elementy na dwa końce */
   margin-bottom: 24px;
 }
 .top h1 {
   margin: 0;
 }
-
+ 
+/* Przyciski wyboru języka */
 .lang {
   display: flex;
   gap: 6px;
@@ -279,11 +331,12 @@ h1 {
 .lang button:hover {
   background: rgba(255, 255, 255, 0.18);
 }
-.lang button.active {
+.lang button.active {               /* aktualnie wybrany język (klasę dodaje JS) */
   background: linear-gradient(135deg, var(--akcent-1), var(--akcent-2));
   border-color: transparent;
 }
-
+ 
+/* Logo (telefon) obok bloku z tytułem */
 .logo-title {
   display: flex;
   align-items: center;
@@ -292,23 +345,25 @@ h1 {
 .logo {
   font-size: 32px;
 }
-
+ 
+/* Tytuł i plakietka z liczbą pytań jeden pod drugim */
 .titles {
   display: flex;
-  flex-direction: column;
+  flex-direction: column;           /* elementy w kolumnie zamiast w rzędzie */
   gap: 4px;
 }
 .titles h1 {
   margin: 0;
 }
-
+ 
+/* Plakietka z liczbą pytań w bazie */
 #db-info {
   margin: 0;
-  width: fit-content;
+  width: fit-content;               /* szerokość dopasowana do napisu */
   padding: 3px 12px;
   font-size: 13px;
   font-weight: 700;
   color: white;
-  border-radius: 999px;
+  border-radius: 999px;             /* kształt pigułki */
   background: linear-gradient(135deg, var(--akcent-1), var(--akcent-2));
 }
