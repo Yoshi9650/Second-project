@@ -20,11 +20,9 @@ LANGS = ["pl", "en"]
 @app.route("/api/questions")
 def questions():
     lang = request.args.get("lang", "pl")
-    if lang not in LANGS:
-        lang = "pl"
     qs = load_json(f"questions_{lang}.json", [])
     random.shuffle(qs)
-    return jsonify(qs[:15])
+    return jsonify(qs[:20])
 
 @app.route("/api/score", methods=["POST"])
 def save_score():
