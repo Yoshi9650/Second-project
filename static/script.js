@@ -33,6 +33,7 @@ const TEXTS = {
     resume: "▶ Wznów",
     restart: "↻ Wróć do menu",
     confirmRestart: "Wrócić do menu głównego? Stracisz dotychczasowe punkty.",
+    saved: "Zapisano ✓",
   },
   en: {
     title: "Tech Quiz",
@@ -63,6 +64,7 @@ const TEXTS = {
     resume: "▶ Resume",
     restart: "↻ Back to menu",
     confirmRestart: "Go back to the main menu? You will lose your current points.",
+    saved: "Saved ✓",
   },
 };
  
@@ -122,7 +124,24 @@ let streak = 0;       // seria poprawnych odpowiedzi z rzędu
 let points = 0;       // punkty (z bonusem za szybkość)
 let locked = false;   // true = odpowiedź już udzielona, kolejne kliknięcia ignorujemy
 let paused = false;   // true = quiz wstrzymany (pytanie ukryte, czas stoi)
- 
+let saved = false;    // true = wynik z tej partii jest już zapisany (blokuje kolejne zapisy)
+let gameId = "";      // unikalny numer partii, serwer dzięki niemu odrzuca duplikaty
+
+// Tworzy losowy, unikalny numer partii
+function newGameId() {
+  return (window.crypto && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : Date.now() + "-" + Math.random();   // zapasowa wersja dla starszych przeglądarek
+}
+
+// Blokuje albo odblokowuje formularz zapisu (pole imienia i przycisk)
+function setSaveLocked(isLocked) {
+  const btn = document.getElementById("save");
+  document.getElementById("name").disabled = isLocked;   // disabled = nie da się edytować
+  btn.disabled = isLocked;                               // disabled = nie da się kliknąć
+  btn.textContent = isLocked ? t("saved") : t("save");   // po zapisie napis "Zapisano ✓"
+}
+
 const TIME = 15;          // sekundy na jedno pytanie
 const BASE_POINTS = 100;  // punkty za dobrą odpowiedź
 const MAX_BONUS = 50;     // maksymalny bonus za szybkość
@@ -201,6 +220,7 @@ async function showDbSize() {
  
 // Rozpoczyna quiz: czyści widok, pobiera pytania i pokazuje pierwsze
 async function start() {
+  gameId = newGameId();   // NOWE: każda partia ma własny numer
   clearQuizView();
   showDbSize();
   const res = await fetch("/api/questions?lang=" + lang);
@@ -217,6 +237,8 @@ async function start() {
 // Wraca na ekran startowy (menu główne): zeruje liczniki, wyłącza pauzę
 // i ukrywa quiz oraz ekran końcowy
 function resetQuiz() {
+  saved = false;           // nowa partia: wynik można zapisać znowu
+  setSaveLocked(false);    // odblokowujemy pole imienia i przycisk
   // wyłączamy pauzę, jeśli była włączona
   paused = false;
   document.getElementById("quiz").classList.remove("paused");
@@ -364,14 +386,26 @@ async function loadRanking() {
    REAKCJE NA KLIKNIĘCIA I KLAWISZE
    ===================================================== */
  
-// "Zapisz wynik": wysyła imię i wynik do serwera, potem odświeża ranking
+// "Zapisz wynik": wysyła imię i wynik do serwera, ale tylko raz na rozegraną partię
 document.getElementById("save").addEventListener("click", async () => {
+  if (saved) return;      // wynik z tej partii jest już zapisany
+  saved = true;           // ustawiamy od razu, przed wysłaniem, żeby szybkie podwójne kliknięcie nie wysłało dwóch zapisów
+  setSaveLocked(true);    // blokujemy pole imienia i przycisk
+
   const name = document.getElementById("name").value || t("anonymous");  // puste pole = "Anonim"
-  await fetch("/api/score", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },   // informacja, że wysyłamy JSON
-    body: JSON.stringify({ name, score, total: questions.length, points }),
-  });
+  try {
+    const res = await fetch("/api/score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, score, total: questions.length, points, game_id: gameId }),
+    });
+    // 409 = serwer już ma ten wynik, więc nie traktujemy tego jak błędu
+    if (!res.ok && res.status !== 409) throw new Error("save failed");
+  } catch (err) {
+    saved = false;          // zapis się nie udał, więc odblokowujemy i można spróbować ponownie
+    setSaveLocked(false);
+    return;
+  }
   loadRanking();
 });
  

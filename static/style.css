@@ -499,3 +499,16 @@ h1 {
   background: rgba(255, 255, 255, 0.18);
   border-color: var(--zly);
 }
+
+/* Zablokowany formularz zapisu (po zapisaniu wyniku) */
+#end input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;       /* kursor w kształcie zakazu */
+}
+#end button:disabled,
+#end button:disabled:hover {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;           /* wyłącza efekt unoszenia z :hover */
+  filter: none;
+}

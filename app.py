@@ -79,12 +79,17 @@ def count():
 def save_score():
     data = request.get_json()                # odbiera dane wysłane przez przeglądarkę (imię, wynik, punkty)
     results = load_json("results.json", []) # wczytuje dotychczasowe wyniki (albo pustą listę)
+    # Blokada duplikatów: ten sam numer partii (game_id) można zapisać tylko raz
+    game_id = data.get("game_id")
+    if game_id and any(r.get("game_id") == game_id for r in results):
+        return jsonify({"ok": False, "error": "already saved"}), 409   # 409 = konflikt
     # dopisuje nowy wynik na koniec listy
     results.append({
         "name": data["name"],
         "score": data["score"],
         "total": data["total"],
         "points": data.get("points", 0),     # .get daje 0, jeśli pola "points" nie ma
+        "game_id": game_id,      # numer partii, służy do wykrywania duplikatów
         "date": datetime.now().strftime("%Y-%m-%d %H:%M"),   # data w formacie np. 2026-10-14 18:30
     })
     # zapisujemy całą listę z powrotem do pliku ("w" nadpisuje plik, dlatego wcześniej wczytaliśmy stare wyniki)
