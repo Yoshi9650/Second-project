@@ -31,6 +31,8 @@ const TEXTS = {
     pause: "⏸ Pauza",
     paused: "Pauza",
     resume: "▶ Wznów",
+    restart: "↻ Wróć do menu",
+    confirmRestart: "Wrócić do menu głównego? Stracisz dotychczasowe punkty.",
   },
   en: {
     title: "Tech Quiz",
@@ -59,6 +61,8 @@ const TEXTS = {
     pause: "⏸ Pause",
     paused: "Paused",
     resume: "▶ Resume",
+    restart: "↻ Back to menu",
+    confirmRestart: "Go back to the main menu? You will lose your current points.",
   },
 };
  
@@ -210,18 +214,27 @@ async function start() {
   showQuestion();
 }
  
-// Wraca na ekran startowy: zeruje liczniki i ukrywa quiz oraz ekran końcowy
+// Wraca na ekran startowy (menu główne): zeruje liczniki, wyłącza pauzę
+// i ukrywa quiz oraz ekran końcowy
 function resetQuiz() {
-    // wyłączamy pauzę, jeśli była włączona
+  // wyłączamy pauzę, jeśli była włączona
   paused = false;
   document.getElementById("quiz").classList.remove("paused");
   document.getElementById("pause-screen").hidden = true;
-  clearQuizView();                                    // czyści widok i zatrzymuje timer
+
+  clearQuizView();                                          // czyści widok i zatrzymuje timer
   current = 0; score = 0; streak = 0; points = 0; locked = false;
-  document.getElementById("quiz").hidden = true;      // ukryj quiz
-  document.getElementById("end").hidden = true;       // ukryj ekran końcowy
+  document.getElementById("quiz").hidden = true;            // ukryj quiz
+  document.getElementById("end").hidden = true;             // ukryj ekran końcowy
   document.getElementById("start-screen").hidden = false;   // pokaż ekran startowy
-  showDbSize();                                       // odśwież liczbę pytań
+  showDbSize();                                             // odśwież liczbę pytań
+}
+
+// Przycisk z menu pauzy: po potwierdzeniu wraca do menu głównego
+function restartQuiz() {
+  // "Anuluj" przerywa funkcję, a quiz zostaje wstrzymany
+  if (!confirm(t("confirmRestart"))) return;
+  resetQuiz();
 }
  
 /* =====================================================
@@ -398,6 +411,8 @@ function togglePause() {
 // Przyciski pauzy i wznowienia
 document.getElementById("pause-btn").addEventListener("click", togglePause);
 document.getElementById("resume-btn").addEventListener("click", togglePause);
+// Przycisk powrotu do menu w pauzie
+document.getElementById("restart-btn").addEventListener("click", restartQuiz);
 
 // Obsługa klawiatury: P = pauza, A-D = odpowiedź, Enter lub spacja = dalej
 document.addEventListener("keydown", (e) => {

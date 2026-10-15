@@ -482,3 +482,20 @@ h1 {
 .footer a:hover {
   text-decoration: underline;     /* podkreślenie po najechaniu */
 }
+
+/* Przycisk powrotu do menu w pauzie (sama ramka, żeby nie przyćmiewał "Wznów") */
+#restart-btn {
+  padding: 10px 28px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--tekst);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  transition: background 0.2s, border-color 0.2s;
+}
+#restart-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: var(--zly);
+}
