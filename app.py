@@ -1,119 +1,173 @@
 # ===================================================
 # IMPORTY: gotowe narzędzia, z których korzystamy
 # ===================================================
-from flask import Flask, jsonify, request, render_template  # Flask: serwer; jsonify: odpowiedź w JSON; request: dane z zapytania; render_template: wysyłanie stron HTML
-import json, random                  # json: czytanie i zapis plików JSON; random: losowanie pytań
-from datetime import datetime        # aktualna data i godzina (do zapisu wyniku)
- 
-# Tworzymy aplikację Flask. __name__ pomaga jej znaleźć foldery templates i static
+from flask import Flask, jsonify, request, render_template  # serwer, odpowiedzi JSON, dane z zapytania, strony HTML
+import json, random                  # json: pliki JSON; random: losowanie pytań
+from datetime import datetime        # data i godzina zapisu wyniku
+
+# Tworzymy aplikację Flask
 app = Flask(__name__)
- 
- 
+
+
 # ===================================================
-# FUNKCJA POMOCNICZA: wczytywanie plików JSON
+# USTAWIENIA
+# ===================================================
+LANGS = ["pl", "en"]         # obsługiwane języki
+PACKS = [5, 10, 20, 30]      # dostępne długości quizu (ta sama lista jest w script.js, trzymaj je zgodne)
+DEFAULT_PACK = 10            # pakiet używany, gdy przyjdzie błędna wartość
+DEFAULT_QUIZ = "tech"        # quiz używany, gdy przyjdzie nieznany identyfikator
+
+# REJESTR QUIZÓW
+# Każdy quiz ma identyfikator, tytuły w obu językach i wzór nazwy pliku z pytaniami.
+# {lang} zostanie zastąpione przez "pl" albo "en".
+#
+# JAK DODAĆ NOWY QUIZ:
+#   1. Stwórz pliki z pytaniami (taki sam format jak w questions_pl.json),
+#      np. quizzes/geo_pl.json i quizzes/geo_en.json
+#   2. Odkomentuj albo dopisz wpis poniżej
+#   3. Zrestartuj serwer. Gdy quizów jest więcej niż jeden, na ekranie startowym
+#      pojawi się wybór quizu, a każdy quiz ma własne tabele wyników.
+QUIZZES = {
+    "tech": {
+        "title": {"pl": "Quiz o technologii", "en": "Tech Quiz"},
+        "file": "questions_{lang}.json",
+    },
+    # PRZYKŁAD przyszłego quizu:
+    # "geo": {
+    #     "title": {"pl": "Quiz o geografii", "en": "Geography Quiz"},
+    #     "file": "quizzes/geo_{lang}.json",
+    # },
+}
+
+
+# ===================================================
+# FUNKCJE POMOCNICZE
 # ===================================================
 def load_json(path, default):
-    """Wczytuje plik JSON i zwraca jego zawartość.
-    Jeśli pliku nie ma, zwraca wartość 'default' zamiast zatrzymywać program z błędem
+    """Wczytuje plik JSON. Jeśli pliku nie ma, zwraca 'default'
     (np. results.json nie istnieje, dopóki ktoś nie zapisze pierwszego wyniku)."""
     try:
-        with open(path, encoding="utf-8") as f:   # utf-8, żeby działały polskie litery
-            return json.load(f)                   # zamienia tekst JSON na listy i słowniki Pythona
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
     except FileNotFoundError:
         return default
- 
- 
+
+
+# Trzy funkcje "czyszczące": zamieniają wartość z adresu na bezpieczną,
+# więc nikt nie wymusi otwarcia dowolnego pliku ani dziwnego pakietu.
+def clean_lang(value):
+    return value if value in LANGS else "pl"
+
+def clean_quiz(value):
+    return value if value in QUIZZES else DEFAULT_QUIZ
+
+def clean_pack(value):
+    try:
+        pack = int(value)            # z adresu przychodzi tekst, np. "10"
+    except (TypeError, ValueError):
+        return DEFAULT_PACK
+    return pack if pack in PACKS else DEFAULT_PACK
+
+def load_questions(quiz, lang):
+    """Wczytuje wszystkie pytania wybranego quizu w wybranym języku."""
+    path = QUIZZES[quiz]["file"].format(lang=lang)
+    return load_json(path, [])
+
+
 # ===================================================
 # STRONA GŁÓWNA
 # ===================================================
-@app.route("/")                      # ten adres to strona główna (127.0.0.1:5000/)
+@app.route("/")
 def index():
-    # wysyła plik index.html z folderu templates
     return render_template("index.html")
- 
- 
-# Lista obsługiwanych języków (potrzebna do sprawdzania w /api/count)
-LANGS = ["pl", "en"]
- 
- 
+
+
+# ===================================================
+# API: lista dostępnych quizów
+# ===================================================
+@app.route("/api/quizzes")
+def quizzes():
+    lang = clean_lang(request.args.get("lang"))
+    result = []
+    for quiz_id, info in QUIZZES.items():
+        count = len(load_questions(quiz_id, lang))
+        if count > 0:                # quiz bez pytań w tym języku pomijamy
+            result.append({
+                "id": quiz_id,
+                "title": info["title"],   # tytuły w obu językach
+                "count": count,           # liczba pytań w bazie (dla tego języka)
+            })
+    return jsonify(result)
+
+
 # ===================================================
 # API: pytania do quizu
 # ===================================================
-# Pytania leżą w plikach questions_pl.json i questions_en.json.
-# Każdy plik to lista [ ... ], a każde pytanie wygląda tak:
-#
-#   {
-#     "question": "Treść pytania?",
-#     "answers": ["odpowiedź A", "odpowiedź B", "odpowiedź C"],
-#     "correct": 1,                      <- numer poprawnej odpowiedzi, liczony od 0
-#     "explanation": "Ciekawostka"       <- opcjonalne, pokazuje się po odpowiedzi
-#   }
-#
-# Pytania w obu językach muszą mieć taką samą kolejność odpowiedzi.
 @app.route("/api/questions")
 def questions():
-    # odczytuje język z adresu, np. /api/questions?lang=en. Domyślnie "pl"
-    lang = request.args.get("lang", "pl")
-    # wczytuje plik z pytaniami dla danego języka (questions_pl.json albo questions_en.json)
-    qs = load_json(f"questions_{lang}.json", [])
-    random.shuffle(qs)               # miesza kolejność pytań
-    return jsonify(qs[:20])          # zwraca pierwsze 20 po wymieszaniu (zmień liczbę, żeby zmienić długość quizu)
- 
- 
-# ===================================================
-# API: liczba pytań w bazie
-# ===================================================
-@app.route("/api/count")
-def count():
-    lang = request.args.get("lang", "pl")
-    if lang not in LANGS:            # zabezpieczenie: tylko języki z listy LANGS
-        lang = "pl"
-    # len() zwraca liczbę elementów listy, czyli liczbę pytań w pliku
-    return jsonify({"count": len(load_json(f"questions_{lang}.json", []))})
- 
- 
+    # np. /api/questions?lang=en&quiz=tech&pack=10
+    lang = clean_lang(request.args.get("lang"))
+    quiz = clean_quiz(request.args.get("quiz"))
+    pack = clean_pack(request.args.get("pack"))
+
+    qs = load_questions(quiz, lang)
+    random.shuffle(qs)               # miesza kolejność
+    return jsonify(qs[:pack])        # bierze tyle pytań, ile wynosi pakiet
+
+
 # ===================================================
 # API: zapis wyniku do rankingu
 # ===================================================
-@app.route("/api/score", methods=["POST"])   # POST = ten adres przyjmuje dane wysyłane przez JS
+@app.route("/api/score", methods=["POST"])
 def save_score():
-    data = request.get_json()                # odbiera dane wysłane przez przeglądarkę (imię, wynik, punkty)
-    results = load_json("results.json", []) # wczytuje dotychczasowe wyniki (albo pustą listę)
+    data = request.get_json()
+    quiz = clean_quiz(data.get("quiz"))
+    pack = clean_pack(data.get("pack"))
+    results = load_json("results.json", [])
+
     # Blokada duplikatów: ten sam numer partii (game_id) można zapisać tylko raz
     game_id = data.get("game_id")
     if game_id and any(r.get("game_id") == game_id for r in results):
         return jsonify({"ok": False, "error": "already saved"}), 409   # 409 = konflikt
-    # dopisuje nowy wynik na koniec listy
+
     results.append({
         "name": data["name"],
         "score": data["score"],
         "total": data["total"],
-        "points": data.get("points", 0),     # .get daje 0, jeśli pola "points" nie ma
-        "game_id": game_id,      # numer partii, służy do wykrywania duplikatów
-        "date": datetime.now().strftime("%Y-%m-%d %H:%M"),   # data w formacie np. 2026-10-14 18:30
+        "points": data.get("points", 0),
+        "quiz": quiz,                # z którego quizu jest wynik
+        "pack": pack,                # w którym pakiecie pytań (5, 10, 20 albo 30)
+        "game_id": game_id,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
     })
-    # zapisujemy całą listę z powrotem do pliku ("w" nadpisuje plik, dlatego wcześniej wczytaliśmy stare wyniki)
     with open("results.json", "w", encoding="utf-8") as f:
-        json.dump(results, f, ensure_ascii=False, indent=2)   # ensure_ascii=False zachowuje polskie litery, indent=2 robi czytelne wcięcia
-    return jsonify({"ok": True})             # odpowiedź dla JS: wszystko się udało
- 
- 
+        json.dump(results, f, ensure_ascii=False, indent=2)
+    return jsonify({"ok": True})
+
+
 # ===================================================
-# API: ranking najlepszych wyników
+# API: ranking dla wybranego quizu i pakietu
 # ===================================================
 @app.route("/api/results")
 def results():
+    quiz = clean_quiz(request.args.get("quiz"))
+    pack = clean_pack(request.args.get("pack"))
     res = load_json("results.json", [])
-    # sortuje od największej liczby punktów (reverse=True = malejąco);
-    # lambda mówi, po czym sortować; .get daje 0 dla starych wyników bez punktów
-    res.sort(key=lambda r: r.get("points", 0), reverse=True)
-    return jsonify(res[:10])                 # zwraca 10 najlepszych
- 
- 
+
+    # Zostawiamy tylko wyniki z tego quizu i tego pakietu.
+    # Stare wyniki bez pól quiz/pack traktujemy jako quiz "tech",
+    # a za pakiet uznajemy liczbę pytań, na które odpowiadano (total).
+    res = [
+        r for r in res
+        if r.get("quiz", DEFAULT_QUIZ) == quiz
+        and r.get("pack", r.get("total")) == pack
+    ]
+    res.sort(key=lambda r: r.get("points", 0), reverse=True)   # od najlepszego
+    return jsonify(res[:10])
+
+
 # ===================================================
 # URUCHOMIENIE SERWERA
 # ===================================================
-# Ten warunek jest prawdziwy tylko wtedy, gdy uruchamiasz ten plik bezpośrednio (python app.py)
 if __name__ == "__main__":
-    # debug=True: serwer sam się restartuje po zmianach w kodzie i pokazuje czytelne błędy
     app.run(debug=True)

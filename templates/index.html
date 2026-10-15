@@ -16,43 +16,57 @@
   <!-- Karta: główny pojemnik, w którym leży cały quiz -->
   <div class="card">
 
-    <!-- ===== NAGŁÓWEK: logo, tytuł, licznik pytań i przyciski języka ===== -->
+    <!-- ===== NAGŁÓWEK: logo, tytuł wybranego quizu i liczba pytań w bazie ===== -->
     <div class="top">
       <div class="logo-title">
         <!-- Ikonka telefonu obok tytułu (poza h1, żeby gradient jej nie zamalował) -->
         <span class="logo">📱</span>
         <div class="titles">
-          <!-- Tytuł: tekst wpisuje JS na podstawie data-i18n (zależnie od języka) -->
-          <h1 data-i18n="title"></h1>
-          <!-- Liczba pytań w bazie: wypełnia JS po pobraniu danych z Flaska -->
+          <!-- Tytuł: wpisuje JS (nazwa wybranego quizu w wybranym języku) -->
+          <h1 id="main-title" data-i18n="title"></h1>
+          <!-- Liczba pytań w bazie wybranego quizu: wypełnia JS -->
           <p id="db-info"></p>
+        </div>
+      </div>
     </div>
-   </div>
-   <!-- ===== EKRAN STARTOWY: wybór języka i przycisk Start ===== -->
-   <div id="start-screen">
-   <!-- Napis "Wybierz język" (tekst wpisuje JS przez data-i18n) -->
-   <p id="lang-label" data-i18n="chooseLang"></p>
-    <!-- Przyciski języka; data-lang mówi JS, który język wybrać -->
-     <div class="lang">
-      <button data-lang="pl">PL</button>
-     <button data-lang="en">EN</button>
-  </div>
-  <!-- Przycisk rozpoczynający quiz -->
-  <button id="start-btn" data-i18n="start"></button>
-  <!-- Stopka ekranu startowego: autor i link do GitHuba -->
-<div class="footer">
-  <span>© Michał Kuczyński 2026</span>
-  <!-- Zamień adres w href na link do swojego repozytorium -->
-  <a id="github-link" href="https://github.com/Yoshi9650"
-     target="_blank" rel="noopener noreferrer">GitHub</a>
-</div>
-</div>
+
+    <!-- ===== EKRAN STARTOWY: język, quiz, liczba pytań i przycisk Start ===== -->
+    <div id="start-screen">
+      <!-- Wybór języka; data-lang mówi JS, który język wybrać -->
+      <p id="lang-label" data-i18n="chooseLang"></p>
+      <div class="lang">
+        <button data-lang="pl">PL</button>
+        <button data-lang="en">EN</button>
+      </div>
+
+      <!-- Wybór quizu: ukryty, dopóki jest tylko jeden quiz.
+           Przyciski dodaje JS na podstawie listy z serwera (/api/quizzes) -->
+      <div id="quiz-picker" hidden>
+        <p data-i18n="chooseQuiz"></p>
+        <div id="quiz-buttons" class="choices"></div>
+      </div>
+
+      <!-- Wybór liczby pytań (5, 10, 20, 30); przyciski dodaje JS -->
+      <p data-i18n="choosePack"></p>
+      <div id="pack-buttons" class="choices"></div>
+
+      <!-- Przycisk rozpoczynający quiz -->
+      <button id="start-btn" data-i18n="start"></button>
+
+      <!-- Stopka: autor i link do GitHuba -->
+      <div class="footer">
+        <span>© Michał Kuczyński 2026</span>
+        <!-- Zamień adres w href na link do swojego repozytorium -->
+        <a id="github-link" href="https://github.com/TWOJ-LOGIN/TWOJ-REPO"
+           target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
     </div>
 
     <!-- ===== EKRAN QUIZU: widoczny podczas gry ===== -->
     <div id="quiz" hidden>
-      <!-- Przycisk pauzy (podczas pauzy jest ukryty razem z resztą quizu) -->
+      <!-- Przycisk pauzy (podczas pauzy ukryty razem z resztą quizu) -->
       <button id="pause-btn" data-i18n="pause"></button>
+
       <!-- Pasek postępu quizu (zewnętrzny pasek + wypełnienie, którym steruje JS) -->
       <div class="bar"><div id="bar-fill"></div></div>
       <!-- Napis "Pytanie X z Y", punkty i seria -->
@@ -69,17 +83,18 @@
       <!-- Tu JS tworzy przyciski z odpowiedziami A, B, C -->
       <div id="answers"></div>
 
-      <!-- Komunikat po odpowiedzi ("Dobrze!", "Czas minął!"); hidden = ukryty na starcie -->
+      <!-- Komunikat po odpowiedzi; hidden = ukryty na starcie -->
       <p id="feedback" hidden></p>
       <!-- Wyjaśnienie odpowiedzi (jeśli pytanie je ma) -->
       <p id="explanation" hidden></p>
       <!-- Przycisk przejścia do następnego pytania, pokazywany po odpowiedzi -->
       <button id="next" hidden></button>
+
       <!-- Ekran pauzy: widoczny tylko wtedy, gdy quiz jest wstrzymany -->
       <div id="pause-screen" hidden>
-       <h2 id="pause-title" data-i18n="paused"></h2>
+        <h2 id="pause-title" data-i18n="paused"></h2>
         <button id="resume-btn" data-i18n="resume"></button>
-        <!-- Powrót do menu głównego (ekran startowy z wyborem języka) -->
+        <!-- Powrót do menu głównego (ekran startowy) -->
         <button id="restart-btn" data-i18n="restart"></button>
       </div>
     </div>
@@ -90,13 +105,14 @@
       <h2 id="result"></h2>
       <!-- Pole na imię; data-i18n-placeholder = podpowiedź w polu zależna od języka -->
       <input id="name" data-i18n-placeholder="namePlaceholder">
-      <!-- Zapis wyniku do rankingu -->
+      <!-- Zapis wyniku do rankingu (można zapisać tylko raz na partię) -->
       <button id="save" data-i18n="save"></button>
-      <!-- Rozpoczęcie quizu od nowa -->
+      <!-- Powrót do ekranu startowego -->
       <button id="again" data-i18n="again"></button>
 
-      <!-- Ranking: lista numerowana (ol), wiersze dodaje JS -->
-      <h3 data-i18n="ranking"></h3>
+      <!-- Ranking: nagłówek z liczbą pytań pakietu, zakładki pakietów i lista wyników -->
+      <h3 id="rank-title"></h3>
+      <div id="rank-tabs" class="choices"></div>
       <ol id="ranking"></ol>
     </div>
 

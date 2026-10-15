@@ -512,3 +512,94 @@ h1 {
   transform: none;           /* wyłącza efekt unoszenia z :hover */
   filter: none;
 }
+
+/* =====================================================
+   WYBÓR QUIZU I PAKIETU PYTAŃ (ekran startowy)
+   oraz ZAKŁADKI PAKIETÓW nad tabelą wyników
+   ===================================================== */
+ 
+/* Wybór quizu: napis + przyciski jeden pod drugim */
+#quiz-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+#quiz-picker[hidden] {             /* display: flex nadpisuje hidden, więc przywracamy je ręcznie */
+  display: none;
+}
+ 
+/* Napisy nad wyborem (język, quiz, liczba pytań) */
+#start-screen p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--tekst-przyciemniony);
+}
+ 
+/* Rząd przycisków wyboru (quiz, pakiet, zakładki rankingu) */
+.choices {
+  display: flex;
+  flex-wrap: wrap;                 /* na wąskim ekranie przyciski przechodzą do nowej linii */
+  justify-content: center;
+  gap: 10px;
+}
+ 
+/* Wygląd przycisku wyboru.
+   Drugi selektor (#end .choices button) jest potrzebny, bo reguła "#end button"
+   z ekranu końcowego ma wyższy priorytet i bez niego zakładki wyglądałyby jak duże przyciski. */
+.choices button,
+#end .choices button {
+  min-width: 52px;
+  padding: 10px 18px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--tekst);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+ 
+/* Najechanie myszką (tylko na przyciskach, które nie są wyłączone) */
+.choices button:hover:not(:disabled),
+#end .choices button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+  filter: none;
+}
+ 
+/* Wybrana opcja: gradient jak w przycisku języka */
+.choices button.active,
+#end .choices button.active {
+  background: linear-gradient(135deg, var(--akcent-1), var(--akcent-2));
+  border-color: transparent;
+}
+ 
+/* Opcja niedostępna (np. pakiet większy niż liczba pytań w quizie) */
+.choices button:disabled,
+#end .choices button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+ 
+/* Zakładki pakietów nad tabelą wyników: wyrównane do lewej, mniejsze */
+#rank-tabs {
+  justify-content: flex-start;
+  margin: 8px 0 12px;
+}
+#end #rank-tabs button {
+  padding: 6px 14px;
+  font-size: 14px;
+}
+ 
+/* Nagłówek tabeli wyników */
+#rank-title {
+  margin: 20px 0 0;
+}
+ 
+/* Informacja, gdy w danym pakiecie nie ma jeszcze wyników */
+#ranking li.empty {
+  list-style: none;                /* bez numeru przy komunikacie */
+  color: var(--tekst-przyciemniony);
+}
