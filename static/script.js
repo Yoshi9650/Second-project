@@ -1,3 +1,8 @@
+// Adres serwera Flask. Gdy strona działa na Flasku (port 5000) albo w internecie, adresy są względne.
+// Gdy działa lokalnie na innym porcie (np. Live Server), kierujemy zapytania do Flaska na porcie 5000.
+const isLocal = ["127.0.0.1", "localhost"].includes(location.hostname);
+const API = (isLocal && location.port !== "5000") ? "http://127.0.0.1:5000" : "";
+
 /* =====================================================
    TŁUMACZENIA
    Słownik z napisami interfejsu w dwóch językach.
@@ -37,6 +42,7 @@ const TEXTS = {
     resume: "▶ Wznów",
     restart: "↻ Wróć do menu",
     confirmRestart: "Wrócić do menu głównego? Stracisz dotychczasowe punkty.",
+    serverError: "Brak połączenia z serwerem. Uruchom: python app.py",  
   },
   en: {
     title: "Tech Quiz",
@@ -71,6 +77,7 @@ const TEXTS = {
     resume: "▶ Resume",
     restart: "↻ Back to menu",
     confirmRestart: "Go back to the main menu? You will lose your current points.",
+    serverError: "Can't reach the server. Run: python app.py",
   },
 };
 
@@ -210,8 +217,14 @@ function refreshStartScreen() {
 
 // Pobiera z serwera listę quizów dostępnych w aktualnym języku
 async function loadQuizzes() {
-  const res = await fetch("/api/quizzes?lang=" + lang);
-  quizList = await res.json();
+  try {
+    const res = await fetch(API + "/api/quizzes?lang=" + lang);
+    quizList = await res.json();
+  } catch (err) {
+    // serwer nie odpowiada: pokazujemy podpowiedź zamiast pustej strony
+    document.getElementById("db-info").textContent = t("serverError");
+    return;
+  }
 
   // jeśli zapamiętany quiz nie istnieje w tym języku, bierzemy pierwszy z listy
   if (quizList.length > 0 && !quizList.some((q) => q.id === quizId)) {
@@ -530,7 +543,7 @@ function buildRankTabs() {
 
 // Pobiera ranking wybranego quizu i pakietu z serwera i wyświetla go jako listę
 async function loadRanking() {
-  const res = await fetch(`/api/results?quiz=${quizId}&pack=${rankPack}`);
+  const res = await fetch(API + `/api/results?quiz=${quizId}&pack=${rankPack}`);
   const data = await res.json();
   const list = document.getElementById("ranking");
   list.innerHTML = "";
@@ -572,7 +585,7 @@ document.getElementById("save").addEventListener("click", async () => {
 
   const name = document.getElementById("name").value || t("anonymous");  // puste pole = "Anonim"
   try {
-    const res = await fetch("/api/score", {
+    const res = await fetch(API + "/api/score", {
       method: "POST",
       headers: { "Content-Type": "application/json" },   // informacja, że wysyłamy JSON
       body: JSON.stringify({
