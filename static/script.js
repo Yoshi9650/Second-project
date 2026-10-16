@@ -19,7 +19,7 @@ let quizId = localStorage.getItem("quiz") || "tech", pack = Number(localStorage.
 if (!PACKS.includes(pack)) pack = 10;
 let category = "all", mode = "classic", difficulty = "medium", quizList = [], categories = [], rankPack = pack;
 // Stan bieżącej rozgrywki: pytania, wynik, zegary, koła ratunkowe, odznaki i gracze.
-let questions=[], current=0, score=0, streak=0, points=0, locked=false, paused=false, saved=false, gameId="", timeLeft=15, timerId=null, blitzLeft=60, blitzId=null, startAnswerAt=0, perfect=true, quick=false, usedFifty=false, usedTime=false, badgesEarned=[], playerIndex=0, players=[], playerScores=[0,0], turnCorrect=[0,0], gameEnded=false, soundOn=true, themeIndex=Number(localStorage.getItem("theme")||0), roundScore=0;
+let questions=[], baseQuestions=[], current=0, score=0, streak=0, points=0, locked=false, paused=false, saved=false, gameId="", timeLeft=15, timerId=null, blitzLeft=60, blitzId=null, startAnswerAt=0, perfect=true, quick=false, usedFifty=false, usedTime=false, badgesEarned=[], playerIndex=0, players=[], playerScores=[0,0], turnCorrect=[0,0], gameEnded=false, soundOn=true, themeIndex=Number(localStorage.getItem("theme")||0), roundScore=0;
 // Czas na odpowiedź dla każdego poziomu trudności (w sekundach).
 const TIMES= {
   easy:25,medium:15,hard:10
@@ -198,7 +198,9 @@ async function start() {
   gameId=newGameId();
   saved=false;
   pack=Number(pack)||10;
-  const url=`${API}/api/questions?lang=${lang}&quiz=${quizId}&pack=${pack}&category=${encodeURIComponent(category)}&daily=${mode==="daily"?1:0}`;
+  // Blitz i Przetrwanie korzystają z całej puli pytań, a nie z pakietu 5/10/20/30.
+  const useFullPool=mode==="blitz"||mode==="survival";
+  const url=`${API}/api/questions?lang=${lang}&quiz=${quizId}&pack=${pack}&category=${encodeURIComponent(category)}&daily=${mode==="daily"?1:0}${useFullPool?"&all=1":""}`;
   try {
     const r=await fetch(url);
     questions=await r.json();
@@ -210,8 +212,8 @@ async function start() {
     $("question").textContent=t("noQuestions");
     return;
   }
-  if(mode==="survival")questions=questions.concat(questions.slice().sort(()=>Math.random()-.5));
-  if(mode==="blitz")questions=questions.concat(questions.slice().sort(()=>Math.random()-.5),questions.slice().sort(()=>Math.random()-.5));
+  // Zachowuje oryginalną pulę. W Blitz i Przetrwaniu kolejne partie pytań będą losowane z tej puli.
+  baseQuestions=questions.slice();
   if(mode==="duel") {
     players=[$("player1-name").value.trim()||t("player1"),$("player2-name").value.trim()||t("player2")];
     $("lifelines").hidden=true;
@@ -285,8 +287,25 @@ function startTimer() {
 function showQuestion() {
   if(gameEnded)return;
   if(current>=questions.length) {
-    finishGame();
-    return;
+    // Blitz trwa do końca 60 sekund, a Przetrwanie do pierwszej błędnej odpowiedzi.
+    // Po wykorzystaniu wszystkich pytań dokładamy nową, przetasowaną kolejkę zamiast kończyć grę.
+    if((mode==="blitz"||mode==="survival")&&baseQuestions.length) {
+      const nextBatch=baseQuestions.slice();
+      // Tasowanie Fishera–Yatesa: równomiernie miesza całą pulę pytań.
+      for(let i=nextBatch.length-1;i>0;i--) {
+        const j=Math.floor(Math.random()*(i+1));
+        [nextBatch[i],nextBatch[j]]=[nextBatch[j],nextBatch[i]];
+      }
+      const previousQuestion=questions[current-1];
+      // Jeśli to możliwe, unikaj powtórzenia tego samego pytania na granicy dwóch kolejek.
+      if(nextBatch.length>1&&nextBatch[0]===previousQuestion) {
+        [nextBatch[0],nextBatch[1]]=[nextBatch[1],nextBatch[0]];
+      }
+      questions.push(...nextBatch);
+    } else {
+      finishGame();
+      return;
+    }
   }
   locked=false;
   const q=questions[current];
@@ -369,6 +388,14 @@ function answer(i) {
     streak=0;
     if(i>=0&&buttons[i])buttons[i].classList.add("bad");
     fb.textContent=i===-1?t("timeout"):t("wrong");
+    // W Blitz szybka błędna odpowiedź wygląda jak zgadywanie/spamowanie przycisków.
+    // Jeśli odpowiedź padła w mniej niż 2 sekundy, odejmujemy 5 sekund z zegara.
+    if(mode==="blitz"&&i>=0&&elapsed<2) {
+      const penalty=5;
+      blitzLeft=Math.max(0,blitzLeft-penalty);
+      fb.textContent+=lang==="pl"?` · kara −${penalty} s`:` · −${penalty} s penalty`;
+      showBlitzTime();
+    }
     fb.className="bad";
     playTone(false);
   }
@@ -383,6 +410,11 @@ function answer(i) {
     return;
   }
   if(mode==="blitz") {
+    // Kara może wyzerować zegar, więc natychmiast kończymy rundę zamiast pokazywać kolejne pytanie.
+    if(blitzLeft<=0) {
+      finishGame(t("blitzEnd"));
+      return;
+    }
     current++;
     locked=false;
     setTimeout(()=> {
@@ -470,12 +502,16 @@ function finishGame(reason="") {
   $("end").hidden=false;
   $("start-screen").hidden=true;
   awardBadges();
-  let total=mode==="blitz"?score:questions.length;
-  let p=total?score/total:0;
+  // W Blitz i Przetrwaniu liczba pytań nie jest stałym celem, więc nie pokazujemy wyniku „x / y”.
+  const total=mode==="blitz"?score:questions.length;
+  const p=total?score/total:0;
   let msg=p===1?t("msgPerfect"):p>=.7?t("msgGreat"):p>=.4?t("msgOk"):t("msgLow");
   if(mode==="survival")msg=t("survivalEnd");
   if(mode==="blitz")msg=t("blitzEnd");
-  $("result").textContent=`${reason?reason+" · ":""}${t("score")}: ${score}${mode==="blitz"?"":" / "+total} · ⭐ ${points} ${t("pts")} — ${msg}`;
+  // Tryby specjalne mają własny komunikat końcowy; nie dodawaj go drugi raz przez argument reason.
+  const reasonPrefix=(mode==="survival"||mode==="blitz")?"":(reason?reason+" · ":"");
+  const scoreSummary=`${t("score")}: ${score}${mode==="blitz"||mode==="survival"?"":" / "+total} · ⭐ ${points} ${t("pts")}`;
+  $("result").textContent=`${reasonPrefix}${scoreSummary} — ${msg}`;
   if(mode==="duel") {
     $("duel-result").hidden=false;
     const winner=playerScores[0]===playerScores[1]?t("draw"):t("winner", {
@@ -545,14 +581,18 @@ function restartQuiz() {
 // Rysuje listę wyników rankingu w HTML.
 function showRanking(p) {
   rankPack=p;
-  $("rank-title").textContent=t("rankingFor", {
-    n:p
+  // Każdy tryb specjalny ma własny ranking, bez przełączników rozmiaru pakietu.
+  const specialMode=["blitz","survival","daily"].includes(mode);
+  const rankNames={
+    blitz:lang==="pl"?"Ranking — Blitz 60 s":"Leaderboard — Blitz 60 s",
+    survival:lang==="pl"?"Ranking — Przetrwanie":"Leaderboard — Survival",
+    daily:lang==="pl"?"Ranking — Dzienne wyzwanie":"Leaderboard — Daily challenge"
+  };
+  $("rank-title").textContent=specialMode?rankNames[mode]+(mode==="daily"?` · ${new Date().toISOString().slice(0,10)}`:""):t("rankingFor",{n:p});
+  $("rank-tabs").hidden=specialMode;
+  if(!specialMode) {
+    makeButtons("rank-tabs",PACKS.map(n=>({id:n,label:String(n)})),rankPack,n=>showRanking(n));
   }
-  )+(mode==="daily"?` · ${new Date().toISOString().slice(0,10)}`:"");
-  makeButtons("rank-tabs",PACKS.map(n=>( {
-    id:n,label:String(n)
-  }
-  )),rankPack,n=>showRanking(n));
   loadRanking();
 }
 // Pobiera ranking dla wybranych ustawień i wyświetla go na ekranie końcowym.

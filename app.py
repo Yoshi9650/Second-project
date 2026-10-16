@@ -113,7 +113,9 @@ def categories():
 def questions():
     lang = clean_lang(request.args.get("lang"))
     quiz = clean_quiz(request.args.get("quiz"))
-    pack = clean_pack(request.args.get("pack"))
+    # Blitz i Przetrwanie mogą pobrać całą bazę, niezależnie od pakietu 5/10/20/30.
+    all_questions = request.args.get("all", "0") == "1"
+    pack = len(load_questions(quiz, lang)) if all_questions else clean_pack(request.args.get("pack"))
     category = request.args.get("category", "all")
     daily = request.args.get("daily", "0") == "1"
     return jsonify(select_questions(quiz, lang, pack, category, daily))
@@ -160,9 +162,11 @@ def results():
     category = request.args.get("category", "all")
     daily_date = request.args.get("daily_date", date.today().isoformat()) if mode == "daily" else ""
     res = load_json(RESULTS_FILE, [])
+    # Tryby specjalne mają osobne rankingi niezależne od rozmiaru pakietu klasycznego.
+    special_modes = {"blitz", "survival", "daily"}
     res = [r for r in res
            if r.get("quiz", DEFAULT_QUIZ) == quiz
-           and int(r.get("pack", r.get("total", 0)) or 0) == pack
+           and (mode in special_modes or int(r.get("pack", r.get("total", 0)) or 0) == pack)
            and r.get("mode", "classic") == mode
            and (mode != "daily" or r.get("daily_date", "") == daily_date)
            and (category == "all" or r.get("category", "all") == category)]
