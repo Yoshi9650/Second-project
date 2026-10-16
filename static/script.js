@@ -1,654 +1,618 @@
-// Adres serwera Flask. Gdy strona działa na Flasku (port 5000) albo w internecie, adresy są względne.
-// Gdy działa lokalnie na innym porcie (np. Live Server), kierujemy zapytania do Flaska na porcie 5000.
 const isLocal = ["127.0.0.1", "localhost"].includes(location.hostname);
-const API = (isLocal && location.port !== "5000") ? "http://127.0.0.1:5000" : "";
-
-/* =====================================================
-   TŁUMACZENIA
-   Słownik z napisami interfejsu w dwóch językach.
-   Zapis {n} to miejsce, w które funkcja t() wstawia wartość.
-   ===================================================== */
-const TEXTS = {
-  pl: {
-    title: "Quiz o technologii",
-    question: "Pytanie {n} z {total}",
-    pts: "pkt",
-    streak: "seria",
-    next: "Dalej →",
-    seeResult: "Zobacz wynik",
-    correct: "✅ Dobrze! +{base} pkt, +{bonus} za szybkość",
-    timeout: "⏰ Czas minął!",
-    wrong: "❌ Niestety źle",
-    score: "Wynik",
-    msgPerfect: "Perfekcyjnie! 🏆",
-    msgGreat: "Świetnie! 🔥",
-    msgOk: "Nieźle, spróbuj jeszcze raz",
-    msgLow: "Trochę ćwiczeń i będzie dobrze 😄",
-    save: "Zapisz wynik",
-    saved: "Zapisano ✓",
-    again: "Zagraj jeszcze raz",
-    namePlaceholder: "Twoje imię",
-    anonymous: "Anonim",
-    rankingFor: "Ranking – {n} pytań",
-    noResults: "Brak wyników w tym pakiecie.",
-    noQuestions: "Brak pytań dla tego języka.",
-    dbSize: "Pytań w bazie: {n}",
-    chooseLang: "Wybierz język",
-    chooseQuiz: "Wybierz quiz",
-    choosePack: "Liczba pytań",
-    start: "Start",
-    pause: "⏸ Pauza",
-    paused: "Pauza",
-    resume: "▶ Wznów",
-    restart: "↻ Wróć do menu",
-    confirmRestart: "Wrócić do menu głównego? Stracisz dotychczasowe punkty.",
-    serverError: "Brak połączenia z serwerem. Uruchom: python app.py",  
-  },
-  en: {
-    title: "Tech Quiz",
-    question: "Question {n} of {total}",
-    pts: "pts",
-    streak: "streak",
-    next: "Next →",
-    seeResult: "See result",
-    correct: "✅ Correct! +{base} pts, +{bonus} speed bonus",
-    timeout: "⏰ Time's up!",
-    wrong: "❌ Wrong answer",
-    score: "Score",
-    msgPerfect: "Perfect! 🏆",
-    msgGreat: "Great job! 🔥",
-    msgOk: "Not bad, try again",
-    msgLow: "A bit of practice and you'll get there 😄",
-    save: "Save score",
-    saved: "Saved ✓",
-    again: "Play again",
-    namePlaceholder: "Your name",
-    anonymous: "Anonymous",
-    rankingFor: "Leaderboard – {n} questions",
-    noResults: "No scores in this pack yet.",
-    noQuestions: "No questions found for this language.",
-    dbSize: "Questions in database: {n}",
-    chooseLang: "Choose language",
-    chooseQuiz: "Choose a quiz",
-    choosePack: "Number of questions",
-    start: "Start",
-    pause: "⏸ Pause",
-    paused: "Paused",
-    resume: "▶ Resume",
-    restart: "↻ Back to menu",
-    confirmRestart: "Go back to the main menu? You will lose your current points.",
-    serverError: "Can't reach the server. Run: python app.py",
-  },
-};
-
-/* =====================================================
-   USTAWIENIA WYBORU (język, quiz, pakiet pytań)
-   ===================================================== */
-
-// Dostępne długości quizu. Ta sama lista jest w app.py (PACKS), trzymaj je zgodne.
+const API = (isLocal && location.port && location.port !== "5000") ? "http://127.0.0.1:5000" : "";
 const PACKS = [5, 10, 20, 30];
-
-// Aktualny język: zapamiętany w przeglądarce albo wybrany według języka przeglądarki
-let lang = localStorage.getItem("lang") ||
-  (navigator.language.startsWith("pl") ? "pl" : "en");
-
-// Wybrany quiz (identyfikator z rejestru QUIZZES w app.py)
-let quizId = localStorage.getItem("quiz") || "tech";
-
-// Wybrany pakiet pytań; jeśli zapamiętana wartość jest błędna, bierzemy 10
-let pack = Number(localStorage.getItem("pack")) || 10;
-if (!PACKS.includes(pack)) pack = 10;
-
-let quizList = [];       // lista quizów pobrana z serwera: {id, title, count}
-let rankPack = pack;     // pakiet, którego tabelę wyników aktualnie oglądamy
-
-// Zwraca napis o podanym kluczu w aktualnym języku.
-// vars to obiekt z wartościami do podstawienia, np. t("question", { n: 1, total: 15 })
-function t(key, vars = {}) {
-  let s = TEXTS[lang][key];
-  for (const name in vars) {
-    s = s.replace("{" + name + "}", vars[name]);
+const TEXTS =  {
+  pl: {
+    title:"Quiz o technologii",chooseLang:"Wybierz język",chooseQuiz:"Wybierz quiz",choosePack:"Liczba pytań",chooseCategory:"Kategoria",chooseMode:"Tryb gry",chooseDifficulty:"Trudność",start:"Start",pause:"⏸ Pauza",paused:"Pauza",resume:"▶ Wznów",restart:"↻ Wróć do menu",next:"Dalej →",seeResult:"Zobacz wynik",question:"Pytanie {n} z {total}",pts:"pkt",streak:"seria",correct:"✅ Dobrze! +{points} pkt",wrong:"❌ Niestety źle",timeout:"⏰ Czas minął!",score:"Wynik",msgPerfect:"Perfekcyjnie! 🏆",msgGreat:"Świetnie! 🔥",msgOk:"Nieźle, spróbuj jeszcze raz",msgLow:"Trochę ćwiczeń i będzie dobrze 😄",save:"Zapisz wynik",saved:"Zapisano ✓",again:"Zagraj jeszcze raz",namePlaceholder:"Twoje imię",anonymous:"Anonim",rankingFor:"Ranking – {n} pytań",noResults:"Brak wyników w tym rankingu.",noQuestions:"Brak pytań dla tego wyboru.",dbSize:"Pytań w bazie: {n}",serverError:"Brak połączenia z serwerem. Uruchom: python app.py",confirmRestart:"Wrócić do menu? Stracisz dotychczasowy wynik.",classic:"Klasyczny",survival:"Przetrwanie",blitz:"Blitz",duel:"Dwóch graczy",daily:"Dzienne wyzwanie",easy:"Łatwy",medium:"Średni",hard:"Trudny",player1:"Gracz 1",player2:"Gracz 2",streakBadge:"🔥 10 z rzędu",perfectBadge:"💎 Bez błędu",fastBadge:"⚡ Szybkie palce",fiftyUsed:"50/50 wykorzystane",timeUsed:"Dodatkowe 10 sekund wykorzystane",winner:"Wygrywa: {name}!",draw:"Remis!",turn:"Tura: {name}",survivalEnd:"Koniec przetrwania!",blitzEnd:"Czas Blitza minął!",multiplier:"mnożnik",choose:"Wybierz"
   }
+  ,
+  en: {
+    title:"Tech Quiz",chooseLang:"Choose language",chooseQuiz:"Choose a quiz",choosePack:"Number of questions",chooseCategory:"Category",chooseMode:"Game mode",chooseDifficulty:"Difficulty",start:"Start",pause:"⏸ Pause",paused:"Paused",resume:"▶ Resume",restart:"↻ Back to menu",next:"Next →",seeResult:"See result",question:"Question {n} of {total}",pts:"pts",streak:"streak",correct:"✅ Correct! +{points} pts",wrong:"❌ Wrong answer",timeout:"⏰ Time's up!",score:"Score",msgPerfect:"Perfect! 🏆",msgGreat:"Great job! 🔥",msgOk:"Not bad, try again",msgLow:"A bit of practice and you'll get there 😄",save:"Save score",saved:"Saved ✓",again:"Play again",namePlaceholder:"Your name",anonymous:"Anonymous",rankingFor:"Leaderboard – {n} questions",noResults:"No scores in this leaderboard yet.",dbSize:"Questions in database: {n}",serverError:"Can't reach the server. Run: python app.py",confirmRestart:"Go back to the menu? Your current result will be lost.",classic:"Classic",survival:"Survival",blitz:"Blitz",duel:"Two players",daily:"Daily challenge",easy:"Easy",medium:"Medium",hard:"Hard",player1:"Player 1",player2:"Player 2",streakBadge:"🔥 10 in a row",perfectBadge:"💎 Flawless",fastBadge:"⚡ Quick fingers",fiftyUsed:"50/50 used",timeUsed:"Extra 10 seconds used",winner:"Winner: {name}!",draw:"It's a draw!",turn:"Turn: {name}",survivalEnd:"Survival over!",blitzEnd:"Blitz time is up!",multiplier:"multiplier",choose:"Choose"
+  }
+};
+let lang = localStorage.getItem("lang") || (navigator.language.startsWith("pl") ? "pl" : "en");
+let quizId = localStorage.getItem("quiz") || "tech", pack = Number(localStorage.getItem("pack")) || 10;
+if (!PACKS.includes(pack)) pack = 10;
+let category = "all", mode = "classic", difficulty = "medium", quizList = [], categories = [], rankPack = pack;
+let questions=[], current=0, score=0, streak=0, points=0, locked=false, paused=false, saved=false, gameId="", timeLeft=15, timerId=null, blitzLeft=60, blitzId=null, startAnswerAt=0, perfect=true, quick=false, usedFifty=false, usedTime=false, badgesEarned=[], playerIndex=0, players=[], playerScores=[0,0], turnCorrect=[0,0], gameEnded=false, soundOn=true, themeIndex=Number(localStorage.getItem("theme")||0), roundScore=0;
+const TIMES= {
+  easy:25,medium:15,hard:10
+}
+, MULT= {
+  easy:1,medium:1.25,hard:1.5
+};
+const $=id=>document.getElementById(id);
+function t(k,v= {
+}
+) {
+  let s=(TEXTS[lang]||TEXTS.pl)[k]||k;
+  Object.keys(v).forEach(a=>s=s.replaceAll(`{${a}}`,v[a]));
   return s;
 }
-
-// Zwraca dane wybranego quizu z listy (albo undefined, gdy lista jeszcze nie przyszła)
+function newGameId() {
+  return crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random();
+}
 function currentQuiz() {
-  return quizList.find((q) => q.id === quizId);
+  return quizList.find(q=>q.id===quizId);
 }
-
-// Wpisuje tytuł wybranego quizu w nagłówek (w aktualnym języku)
-function applyQuizTitle() {
-  const q = currentQuiz();
-  if (q) {
-    document.getElementById("main-title").textContent = q.title[lang] || q.title.pl;
-  }
-}
-
-// Wpisuje tłumaczenia we wszystkie elementy HTML oznaczone atrybutami data-i18n
 function applyTexts() {
-  document.documentElement.lang = lang;
-
-  // zwykłe teksty (nagłówki, przyciski)
-  document.querySelectorAll("[data-i18n]").forEach((el) => {
-    el.textContent = t(el.dataset.i18n);
-  });
-
-  // podpowiedzi w polach tekstowych (placeholder)
-  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
-    el.placeholder = t(el.dataset.i18nPlaceholder);
-  });
-
-  // podświetlenie przycisku aktywnego języka
-  document.querySelectorAll(".lang button").forEach((b) => {
-    b.classList.toggle("active", b.dataset.lang === lang);
-  });
-
-  applyQuizTitle();   // tytuł quizu nadpisuje ogólny tytuł ze słownika
+  document.documentElement.lang=lang;
+  document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=t(el.dataset.i18n));
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el=>el.placeholder=t(el.dataset.i18nPlaceholder));
+  document.querySelectorAll(".lang button").forEach(b=>b.classList.toggle("active",b.dataset.lang===lang));
+  const q=currentQuiz();
+  if(q)$("main-title").textContent=q.title[lang]||q.title.pl;
 }
-
-/* =====================================================
-   EKRAN STARTOWY: wybór języka, quizu i pakietu
-   ===================================================== */
-
-// Tworzy przyciski pakietów (5, 10, 20, 30) na podstawie listy PACKS
-function buildPackButtons() {
-  const box = document.getElementById("pack-buttons");
-  box.innerHTML = "";
-  PACKS.forEach((p) => {
-    const b = document.createElement("button");
-    b.textContent = p;
-    b.dataset.pack = p;
-    b.addEventListener("click", () => setPack(p));
+function setLanguage(l) {
+  lang=l;
+  localStorage.setItem("lang",l);
+  applyTexts();
+  loadQuizzes();
+}
+function makeButtons(container,items,selected,onSelect) {
+  const box=$(container);
+  box.innerHTML="";
+  items.forEach(item=> {
+    const b=document.createElement("button");
+    b.type="button";
+    b.textContent=item.label;
+    b.classList.toggle("active",item.id===selected);
+    b.addEventListener("click",()=>onSelect(item.id));
     box.appendChild(b);
-  });
-}
-
-// Tworzy przyciski quizów; cały wybór jest widoczny tylko wtedy, gdy quizów jest więcej niż jeden
-function buildQuizButtons() {
-  const box = document.getElementById("quiz-buttons");
-  box.innerHTML = "";
-  quizList.forEach((q) => {
-    const b = document.createElement("button");
-    b.textContent = q.title[lang] || q.title.pl;
-    b.dataset.quiz = q.id;
-    b.addEventListener("click", () => setQuizId(q.id));
-    box.appendChild(b);
-  });
-  document.getElementById("quiz-picker").hidden = quizList.length < 2;
-}
-
-// Pokazuje liczbę pytań w bazie wybranego quizu
-function updateDbInfo() {
-  const q = currentQuiz();
-  document.getElementById("db-info").textContent =
-    t("dbSize", { n: q ? q.count : 0 });
-}
-
-// Podświetla wybrany pakiet i wyłącza pakiety większe niż liczba pytań w bazie
-function updatePackButtons() {
-  const q = currentQuiz();
-  const buttons = document.querySelectorAll("#pack-buttons button");
-
-  if (q) {
-    // dozwolone pakiety to te, które mieszczą się w bazie; najmniejszy zostaje zawsze
-    const allowed = PACKS.filter((p) => p <= q.count);
-    if (allowed.length === 0) allowed.push(PACKS[0]);
-    // jeśli wybrany pakiet jest za duży dla tego quizu, bierzemy największy dozwolony
-    if (!allowed.includes(pack)) pack = allowed[allowed.length - 1];
-    buttons.forEach((b) => {
-      b.disabled = !allowed.includes(Number(b.dataset.pack));
-    });
   }
-  buttons.forEach((b) => {
-    b.classList.toggle("active", Number(b.dataset.pack) === pack);
-  });
+  );
 }
-
-// Odświeża cały ekran startowy po każdej zmianie (język, quiz, pakiet)
-function refreshStartScreen() {
-  document.querySelectorAll("#quiz-buttons button").forEach((b) => {
-    b.classList.toggle("active", b.dataset.quiz === quizId);
-  });
-  applyQuizTitle();
-  updateDbInfo();
-  updatePackButtons();
+function updateStart() {
+  const q=currentQuiz();
+  $("db-info").textContent=t("dbSize", {
+    n:q?q.count:0
+  }
+  );
+  document.querySelectorAll("#quiz-buttons button").forEach(b=>b.classList.toggle("active",b.dataset.id===quizId));
+  makeButtons("pack-buttons",PACKS.map(p=>( {
+    id:p,label:String(p)
+  }
+  )),pack,p=> {
+    pack=p;
+    localStorage.setItem("pack",p);
+    updateStart();
+  }
+  );
+  makeButtons("category-buttons",categories.map(c=>( {
+    id:c.id,label:c.title[lang]||c.title.pl
+  }
+  )),category,c=> {
+    category=c;
+    updateStart();
+  }
+  );
 }
-
-// Pobiera z serwera listę quizów dostępnych w aktualnym języku
 async function loadQuizzes() {
   try {
-    const res = await fetch(API + "/api/quizzes?lang=" + lang);
-    quizList = await res.json();
-  } catch (err) {
-    // serwer nie odpowiada: pokazujemy podpowiedź zamiast pustej strony
-    document.getElementById("db-info").textContent = t("serverError");
+    let r=await fetch(`${API}/api/quizzes?lang=${lang}`);
+    quizList=await r.json();
+    if(!quizList.some(q=>q.id===quizId)&&quizList.length)quizId=quizList[0].id;
+    const box=$("quiz-buttons");
+    box.innerHTML="";
+    quizList.forEach(q=> {
+      let b=document.createElement("button");
+      b.textContent=q.title[lang]||q.title.pl;
+      b.dataset.id=q.id;
+      b.onclick=()=> {
+        quizId=q.id;
+        loadCategories();
+      };
+      box.appendChild(b);
+    }
+    );
+    $("quiz-picker").hidden=quizList.length<2;
+    await loadCategories();
+  }
+  catch(e) {
+    $("db-info").textContent=t("serverError");
+  }
+}
+async function loadCategories() {
+  try {
+    const r=await fetch(`${API}/api/categories?lang=${lang}&quiz=${quizId}`);
+    categories=await r.json();
+  }
+  catch(e) {
+    categories=[ {
+      id:"all",title: {
+        pl:"Wszystkie",en:"All"
+      }
+    }
+    ];
+  }
+  if(!categories.some(c=>c.id===category))category="all";
+  applyTexts();
+  updateStart();
+}
+function chooseMode(m) {
+  mode=m;
+  document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));
+  $("players-config").hidden=mode!=="duel";
+}
+function chooseDifficulty(d) {
+  difficulty=d;
+  document.querySelectorAll("[data-difficulty]").forEach(b=>b.classList.toggle("active",b.dataset.difficulty===d));
+}
+function resetState() {
+  clearInterval(timerId);
+  clearInterval(blitzId);
+  saved=false;
+  paused=false;
+  locked=false;
+  gameEnded=false;
+  current=score=streak=points=0;
+  perfect=true;
+  quick=false;
+  usedFifty=usedTime=false;
+  badgesEarned=[];
+  playerIndex=0;
+  playerScores=[0,0];
+  turnCorrect=[0,0];
+  roundScore=0;
+  $("quiz").classList.remove("paused");
+  $("pause-screen").hidden=true;
+  $("fifty-btn").disabled=false;
+  $("time-btn").disabled=false;
+  $("fifty-btn").hidden=mode!=="classic"&&mode!=="daily";
+  $("time-btn").hidden=mode!=="classic"&&mode!=="daily";
+  $("lifelines").hidden=mode==="blitz"||mode==="survival"||mode==="duel";
+  $("feedback").hidden=true;
+  $("explanation").hidden=true;
+  $("next").hidden=true;
+  $("badge-live").textContent="";
+  $("end").hidden=true;
+  $("quiz").hidden=false;
+  $("start-screen").hidden=true;
+  $("name").disabled=false;
+  $("save").disabled=false;
+  $("save").textContent=t("save");
+  $("duel-result").hidden=true;
+}
+async function start() {
+  resetState();
+  gameId=newGameId();
+  saved=false;
+  pack=Number(pack)||10;
+  const url=`${API}/api/questions?lang=${lang}&quiz=${quizId}&pack=${pack}&category=${encodeURIComponent(category)}&daily=${mode==="daily"?1:0}`;
+  try {
+    const r=await fetch(url);
+    questions=await r.json();
+  }
+  catch(e) {
+    questions=[];
+  }
+  if(!questions.length) {
+    $("question").textContent=t("noQuestions");
     return;
   }
-
-  // jeśli zapamiętany quiz nie istnieje w tym języku, bierzemy pierwszy z listy
-  if (quizList.length > 0 && !quizList.some((q) => q.id === quizId)) {
-    quizId = quizList[0].id;
+  if(mode==="survival")questions=questions.concat(questions.slice().sort(()=>Math.random()-.5));
+  if(mode==="blitz")questions=questions.concat(questions.slice().sort(()=>Math.random()-.5),questions.slice().sort(()=>Math.random()-.5));
+  if(mode==="duel") {
+    players=[$("player1-name").value.trim()||t("player1"),$("player2-name").value.trim()||t("player2")];
+    $("lifelines").hidden=true;
   }
-  buildQuizButtons();
-  refreshStartScreen();
-}
-
-// Wybór pakietu pytań
-function setPack(p) {
-  pack = p;
-  localStorage.setItem("pack", p);   // zapamiętujemy wybór w przeglądarce
-  updatePackButtons();
-}
-
-// Wybór quizu
-function setQuizId(id) {
-  quizId = id;
-  localStorage.setItem("quiz", id);
-  refreshStartScreen();
-}
-
-// Zmiana języka (możliwa tylko na ekranie startowym): zapamiętuje wybór,
-// tłumaczy interfejs i pobiera listę quizów w nowym języku
-function setLanguage(l) {
-  if (l === lang) return;             // ten sam język, nic nie robimy
-  lang = l;
-  localStorage.setItem("lang", lang);
-  applyTexts();
-  loadQuizzes();                      // w innym języku mogą być inne tytuły i liczby pytań
-}
-
-/* =====================================================
-   STAN QUIZU
-   Zmienne, w których quiz "pamięta", co się dzieje
-   ===================================================== */
-let questions = [];   // lista pytań pobrana z serwera
-let current = 0;      // numer aktualnego pytania (0 = pierwsze)
-let score = 0;        // liczba poprawnych odpowiedzi
-let streak = 0;       // seria poprawnych odpowiedzi z rzędu
-let points = 0;       // punkty (z bonusem za szybkość)
-let locked = false;   // true = odpowiedź już udzielona, kolejne kliknięcia ignorujemy
-let paused = false;   // true = quiz wstrzymany (pytanie ukryte, czas stoi)
-let saved = false;    // true = wynik z tej partii jest już zapisany
-let gameId = "";      // unikalny numer partii, serwer dzięki niemu odrzuca duplikaty
-
-const TIME = 15;          // sekundy na jedno pytanie
-const BASE_POINTS = 100;  // punkty za dobrą odpowiedź
-const MAX_BONUS = 50;     // maksymalny bonus za szybkość
-let timeLeft = TIME;      // ile sekund zostało
-let timerId;              // numer timera, potrzebny do jego zatrzymania
-
-// Tworzy losowy, unikalny numer partii
-function newGameId() {
-  return (window.crypto && crypto.randomUUID)
-    ? crypto.randomUUID()
-    : Date.now() + "-" + Math.random();   // zapasowa wersja dla starszych przeglądarek
-}
-
-// Blokuje albo odblokowuje formularz zapisu (pole imienia i przycisk)
-function setSaveLocked(isLocked) {
-  const btn = document.getElementById("save");
-  document.getElementById("name").disabled = isLocked;   // disabled = nie da się edytować
-  btn.disabled = isLocked;                               // disabled = nie da się kliknąć
-  btn.textContent = isLocked ? t("saved") : t("save");   // po zapisie napis "Zapisano ✓"
-}
-
-/* =====================================================
-   WIDOK: postęp i czas
-   ===================================================== */
-
-// Napis "Pytanie X z Y · punkty · seria"
-function updateProgress() {
-  document.getElementById("progress").textContent =
-    t("question", { n: current + 1, total: questions.length }) +
-    `  ·  ⭐ ${points} ${t("pts")}` +
-    // serię pokazujemy dopiero od 2 poprawnych odpowiedzi z rzędu
-    (streak >= 2 ? `  ·  🔥 ${t("streak")}: ${streak}` : "");
-}
-
-// Odświeża pasek czasu i liczbę sekund obok niego
-function showTime() {
-  const fill = document.getElementById("timer-fill");
-  document.getElementById("timer-text").textContent =
-    Math.max(0, Math.ceil(timeLeft)) + " s";   // ceil zaokrągla w górę, max nie pozwala zejść poniżej 0
-  fill.style.width = Math.max(0, timeLeft / TIME * 100) + "%";
-  fill.classList.toggle("low", timeLeft <= 5); // klasa "low" robi pasek czerwonym przy 5 s i mniej
-}
-
-// Uruchamia odliczanie od aktualnej wartości timeLeft (bez zerowania).
-// Używane przy starcie pytania i przy wznowieniu po pauzie.
-function runTimer() {
-  clearInterval(timerId);   // zatrzymujemy poprzedni timer, żeby nie chodziły dwa naraz
-  // co 100 ms (0,1 s) zmniejszamy czas i odświeżamy pasek
-  timerId = setInterval(() => {
-    timeLeft -= 0.1;
-    showTime();
-    if (timeLeft <= 0) {
-      clearInterval(timerId);
-      answer(-1);           // -1 = brak odpowiedzi, czas minął
+  $("mode-label").textContent=t(mode)+(mode==="duel"?` · ${players[0]} / ${players[1]}`:"");
+  if(mode==="blitz") {
+    blitzLeft=60;
+    showBlitzTime();
+    blitzId=setInterval(()=> {
+      if(paused||gameEnded)return;
+      blitzLeft-=.1;
+      showBlitzTime();
+      if(blitzLeft<=0) {
+        clearInterval(blitzId);
+        finishGame(t("blitzEnd"));
+      }
     }
-  }, 100);
+    ,100);
+  }
+  showQuestion();
 }
-
-// Zaczyna odliczanie dla nowego pytania: ustawia pełny czas i uruchamia timer
+function showBlitzTime() {
+  $("timer-text").textContent=`${Math.max(0,Math.ceil(blitzLeft))} s`;
+  $("timer-fill").style.width=`${Math.max(0,blitzLeft/60*100)}%`;
+  $("timer-fill").classList.toggle("low",blitzLeft<=10);
+}
+function questionTime() {
+  return TIMES[difficulty]||15;
+}
+function updateProgress() {
+  let extra=streak>=10?" ×3":streak>=5?" ×2":"";
+  let player=mode==="duel"?` · ${players[playerIndex]}`:"";
+  $("progress").textContent=(mode==="blitz"?`⭐ ${points} ${t("pts")} · ${score} ✓`:t("question", {
+    n:current+1,total:questions.length
+  }
+  )+` · ⭐ ${points} ${t("pts")}`)+(streak>=2?` · 🔥 ${streak}${extra}`:"")+player;
+  $("bar-fill").style.width=`${Math.min(100,current/questions.length*100)}%`;
+}
+function showTime() {
+  if(mode==="blitz")return;
+  $("timer-text").textContent=`${Math.max(0,Math.ceil(timeLeft))} s`;
+  $("timer-fill").style.width=`${Math.max(0,timeLeft/questionTime()*100)}%`;
+  $("timer-fill").classList.toggle("low",timeLeft<=5);
+}
+function runTimer() {
+  clearInterval(timerId);
+  if(mode==="blitz")return;
+  timerId=setInterval(()=> {
+    if(paused||locked)return;
+    timeLeft-=.1;
+    showTime();
+    if(timeLeft<=0) {
+      clearInterval(timerId);
+      answer(-1);
+    }
+  }
+  ,100);
+}
 function startTimer() {
-  timeLeft = TIME;
+  timeLeft=questionTime();
   showTime();
   runTimer();
 }
-
-// Czyści ekran quizu z pozostałości po poprzednim pytaniu
-function clearQuizView() {
-  clearInterval(timerId);
-  document.getElementById("question").textContent = "";
-  document.getElementById("answers").innerHTML = "";
-  document.getElementById("progress").textContent = "";
-  document.getElementById("timer-text").textContent = "";
-  document.getElementById("timer-fill").style.width = "0%";
-  document.getElementById("bar-fill").style.width = "0%";
-  document.getElementById("feedback").hidden = true;
-  document.getElementById("explanation").hidden = true;
-  document.getElementById("next").hidden = true;
-}
-
-/* =====================================================
-   START QUIZU I PYTANIA
-   ===================================================== */
-
-// Rozpoczyna quiz: nowy numer partii, pobranie pytań wybranego quizu i pakietu
-async function start() {
-  gameId = newGameId();     // każda partia ma własny numer
-  clearQuizView();
-  const res = await fetch(
-    `/api/questions?lang=${lang}&quiz=${quizId}&pack=${pack}`
+function showQuestion() {
+  if(gameEnded)return;
+  if(current>=questions.length) {
+    finishGame();
+    return;
+  }
+  locked=false;
+  const q=questions[current];
+  $("question").textContent=q.question||"";
+  const img=$("question-image");
+  if(q.image) {
+    img.src=q.image;
+    img.alt=q.image_alt||q.question||"Question image";
+    img.hidden=false;
+  }
+  else {
+    img.removeAttribute("src");
+    img.hidden=true;
+  }
+  updateProgress();
+  const box=$("answers");
+  box.innerHTML="";
+  (q.answers||[]).forEach((text,i)=> {
+    const b=document.createElement("button");
+    b.type="button";
+    b.textContent=text;
+    b.addEventListener("click",()=>answer(i));
+    box.appendChild(b);
+  }
   );
-  questions = await res.json();
-
-  // brak pytań: pokazujemy komunikat i kończymy
-  if (questions.length === 0) {
-    document.getElementById("question").textContent = t("noQuestions");
+  $("feedback").hidden=true;
+  $("explanation").hidden=true;
+  $("next").hidden=true;
+  $("fifty-btn").disabled=usedFifty;
+  $("time-btn").disabled=usedTime;
+  startAnswerAt=performance.now();
+  if(mode!=="blitz")startTimer();
+}
+function playTone(ok) {
+  if(!soundOn)return;
+  try {
+    const ctx=new(window.AudioContext||window.webkitAudioContext)(),o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.frequency.value=ok?660:180;
+    g.gain.value=.045;
+    o.start();
+    o.stop(ctx.currentTime+.13);
+    o.onended=()=>ctx.close();
+  }
+  catch(e) {
+  }
+}
+function answer(i) {
+  if(locked||paused||gameEnded)return;
+  locked=true;
+  clearInterval(timerId);
+  const q=questions[current],buttons=[...document.querySelectorAll("#answers button")],fb=$("feedback");
+  const correct=Number(q.correct);
+  if(buttons[correct])buttons[correct].classList.add("good");
+  const elapsed=(performance.now()-startAnswerAt)/1000;
+  let correctNow=i===correct;
+  if(correctNow) {
+    score++;
+    streak++;
+    turnCorrect[playerIndex]++;
+    if(elapsed<2)quick=true;
+    const base=100+Math.round(Math.max(0,timeLeft)/questionTime()*50);
+    const streakMult=streak>=10?3:streak>=5?2:1;
+    const earned=Math.round(base*streakMult*MULT[difficulty]);
+    roundScore+=earned;
+    points+=earned;
+    if(mode==="duel")playerScores[playerIndex]+=earned;
+    fb.textContent=t("correct", {
+      points:earned
+    }
+    )+(streakMult>1?` · ×${streakMult}`:"");
+    fb.className="good";
+    playTone(true);
+  }
+  else {
+    perfect=false;
+    streak=0;
+    if(i>=0&&buttons[i])buttons[i].classList.add("bad");
+    fb.textContent=i===-1?t("timeout"):t("wrong");
+    fb.className="bad";
+    playTone(false);
+  }
+  fb.hidden=false;
+  updateProgress();
+  if(q.explanation) {
+    $("explanation").textContent="💡 "+q.explanation;
+    $("explanation").hidden=false;
+  }
+  if(mode==="survival"&&!correctNow) {
+    finishGame(t("survivalEnd"));
+    return;
+  }
+  if(mode==="blitz") {
+    current++;
+    locked=false;
+    setTimeout(()=> {
+      if(!gameEnded)showQuestion();
+    }
+    ,450);
+    return;
+  }
+  if(mode==="duel") {
+    $("next").textContent=current+1<questions.length?t("next"):t("seeResult");
+  }
+  else {
+    $("next").textContent=current+1<questions.length?t("next"):t("seeResult");
+  }
+  $("next").hidden=false;
+}
+function useFifty() {
+  if(usedFifty||locked||paused)return;
+  const q=questions[current],buttons=[...document.querySelectorAll("#answers button")],wrong=buttons.map((_,i)=>i).filter(i=>i!==Number(q.correct));
+  wrong.sort(()=>Math.random()-.5).slice(0,Math.max(0,wrong.length-1)).forEach(i=>buttons[i].classList.add("removed"));
+  // Keep exactly one wrong answer when possible; hide two incorrect choices.
+  const stillWrong=wrong.filter(i=>!buttons[i].classList.contains("removed"));
+  if(stillWrong.length>1)stillWrong.slice(1).forEach(i=>buttons[i].classList.add("removed"));
+  usedFifty=true;
+  $("fifty-btn").disabled=true;
+}
+function useTime() {
+  if(usedTime||locked||paused||mode==="blitz")return;
+  usedTime=true;
+  timeLeft+=10;
+  showTime();
+  $("time-btn").disabled=true;
+}
+function nextQuestion() {
+  if(!locked)return;
+  $("next").hidden=true;
+  if(mode==="duel")playerIndex=1-playerIndex;
+  current++;
+  if(current>=questions.length) {
+    finishGame();
     return;
   }
   showQuestion();
 }
-
-// Wraca na ekran startowy (menu główne): zeruje liczniki, wyłącza pauzę
-// i ukrywa quiz oraz ekran końcowy
+function awardBadges() {
+  badgesEarned=[];
+  if(streak>=10)badgesEarned.push(t("streakBadge"));
+  if(perfect&&score===questions.length&&mode!=="blitz")badgesEarned.push(t("perfectBadge"));
+  if(quick)badgesEarned.push(t("fastBadge"));
+  $("badges").innerHTML="";
+  badgesEarned.forEach(label=> {
+    const b=document.createElement("span");
+    b.className="badge";
+    b.textContent=label;
+    $("badges").appendChild(b);
+  }
+  );
+}
+function confetti() {
+  const root=$("confetti");
+  root.innerHTML="";
+  for(let i=0;
+  i<55;
+  i++) {
+    const s=document.createElement("i");
+    s.style.left=Math.random()*100+"%";
+    s.style.animationDelay=Math.random()*1.2+"s";
+    s.style.setProperty("--drift",(Math.random()*160-80)+"px");
+    root.appendChild(s);
+  }
+  setTimeout(()=>root.innerHTML="",4000);
+}
+function finishGame(reason="") {
+  if(gameEnded)return;
+  gameEnded=true;
+  clearInterval(timerId);
+  clearInterval(blitzId);
+  $("quiz").hidden=true;
+  $("end").hidden=false;
+  $("start-screen").hidden=true;
+  awardBadges();
+  let total=mode==="blitz"?score:questions.length;
+  let p=total?score/total:0;
+  let msg=p===1?t("msgPerfect"):p>=.7?t("msgGreat"):p>=.4?t("msgOk"):t("msgLow");
+  if(mode==="survival")msg=t("survivalEnd");
+  if(mode==="blitz")msg=t("blitzEnd");
+  $("result").textContent=`${reason?reason+" · ":""}${t("score")}: ${score}${mode==="blitz"?"":" / "+total} · ⭐ ${points} ${t("pts")} — ${msg}`;
+  if(mode==="duel") {
+    $("duel-result").hidden=false;
+    const winner=playerScores[0]===playerScores[1]?t("draw"):t("winner", {
+      name:players[playerScores[0]>playerScores[1]?0:1]
+    }
+    );
+    $("duel-result").textContent=`${players[0]}: ${playerScores[0]} · ${players[1]}: ${playerScores[1]} — ${winner}`;
+    $("name").value=players[0];
+    $("save").hidden=true;
+  }
+  else {
+    $("save").hidden=false;
+  }
+  if(mode==="classic"&&perfect&&score===questions.length)confetti();
+  showRanking(pack);
+}
+function setSaveLocked(v) {
+  $("name").disabled=v;
+  $("save").disabled=v;
+  $("save").textContent=v?t("saved"):t("save");
+}
 function resetQuiz() {
-  saved = false;           // nowa partia: wynik można zapisać znowu
-  setSaveLocked(false);    // odblokowujemy pole imienia i przycisk
-
-  // wyłączamy pauzę, jeśli była włączona
-  paused = false;
-  document.getElementById("quiz").classList.remove("paused");
-  document.getElementById("pause-screen").hidden = true;
-
-  clearQuizView();
-  current = 0; score = 0; streak = 0; points = 0; locked = false;
-  document.getElementById("quiz").hidden = true;            // ukryj quiz
-  document.getElementById("end").hidden = true;             // ukryj ekran końcowy
-  document.getElementById("start-screen").hidden = false;   // pokaż ekran startowy
-  refreshStartScreen();
+  clearInterval(timerId);
+  clearInterval(blitzId);
+  $("quiz").hidden=true;
+  $("end").hidden=true;
+  $("start-screen").hidden=false;
+  $("quiz").classList.remove("paused");
+  $("pause-screen").hidden=true;
+  $("name").value="";
+  $("save").hidden=false;
+  $("save").disabled=false;
+  $("name").disabled=false;
+  $("save").textContent=t("save");
+  updateStart();
 }
-
-// Wyświetla aktualne pytanie i przyciski z odpowiedziami
-function showQuestion() {
-  const q = questions[current];
-  document.getElementById("question").textContent = q.question;
-  updateProgress();
-
-  // pasek postępu quizu: ile pytań już za nami
-  document.getElementById("bar-fill").style.width =
-    (current / questions.length * 100) + "%";
-
-  // Ponowne odtworzenie animacji pytania: usuwamy klasę, wymuszamy przeliczenie
-  // układu (offsetWidth) i dodajemy klasę z powrotem
-  const qEl = document.getElementById("question");
-  qEl.classList.remove("anim");
-  void qEl.offsetWidth;
-  qEl.classList.add("anim");
-
-  // Tworzymy przycisk dla każdej odpowiedzi
-  const box = document.getElementById("answers");
-  box.innerHTML = "";
-  q.answers.forEach((text, i) => {
-    const btn = document.createElement("button");
-    btn.textContent = text;
-    btn.addEventListener("click", () => answer(i));   // i = numer klikniętej odpowiedzi
-    box.appendChild(btn);
-  });
-
-  // chowamy komunikaty z poprzedniego pytania i uruchamiamy czas
-  document.getElementById("feedback").hidden = true;
-  document.getElementById("explanation").hidden = true;
-  document.getElementById("next").hidden = true;
-  startTimer();
-}
-
-// Obsługa odpowiedzi. i = numer klikniętej odpowiedzi, a -1 oznacza brak odpowiedzi (koniec czasu)
-function answer(i) {
-  if (locked) return;       // odpowiedź już była, ignorujemy kolejne kliknięcia
-  locked = true;
-  clearInterval(timerId);   // zatrzymujemy czas
-
-  const q = questions[current];
-  const buttons = document.querySelectorAll("#answers button");
-  const fb = document.getElementById("feedback");
-
-  // zawsze zaznaczamy poprawną odpowiedź na zielono
-  buttons[q.correct].classList.add("good");
-
-  if (i === q.correct) {
-    // DOBRA odpowiedź: bonus zależy od tego, ile czasu zostało
-    const bonus = Math.round(Math.max(0, timeLeft) / TIME * MAX_BONUS);
-    score++;
-    streak++;
-    points += BASE_POINTS + bonus;
-    fb.textContent = t("correct", { base: BASE_POINTS, bonus: bonus });
-    fb.className = "good";
-  } else if (i === -1) {
-    // KONIEC CZASU: brak punktów, seria przerwana
-    streak = 0;
-    fb.textContent = t("timeout");
-    fb.className = "bad";
-  } else {
-    // ZŁA odpowiedź: kliknięty przycisk robi się czerwony
-    streak = 0;
-    buttons[i].classList.add("bad");
-    fb.textContent = t("wrong");
-    fb.className = "bad";
-  }
-  fb.hidden = false;
-  updateProgress();
-
-  // wyjaśnienie pokazujemy tylko wtedy, gdy pytanie ma pole "explanation"
-  if (q.explanation) {
-    const el = document.getElementById("explanation");
-    el.textContent = "💡 " + q.explanation;
-    el.hidden = false;
-  }
-
-  // przycisk "Dalej", a na ostatnim pytaniu "Zobacz wynik"
-  const next = document.getElementById("next");
-  next.textContent =
-    current + 1 < questions.length ? t("next") : t("seeResult");
-  next.hidden = false;
-}
-
-/* =====================================================
-   PAUZA
-   ===================================================== */
-
-// Włącza i wyłącza pauzę
 function togglePause() {
-  if (document.getElementById("quiz").hidden) return;   // pauza działa tylko podczas quizu
-  paused = !paused;
-
-  // klasa "paused" ukrywa pytanie i odpowiedzi (patrz CSS), a ekran pauzy pokazujemy osobno
-  document.getElementById("quiz").classList.toggle("paused", paused);
-  document.getElementById("pause-screen").hidden = !paused;
-
-  if (paused) {
-    clearInterval(timerId);   // zatrzymujemy czas
-  } else if (!locked) {
-    runTimer();               // wznawiamy czas, ale tylko jeśli nie odpowiedziano jeszcze na pytanie
+  if($("quiz").hidden||gameEnded)return;
+  paused=!paused;
+  $("quiz").classList.toggle("paused",paused);
+  $("pause-screen").hidden=!paused;
+  if(paused) {
+    clearInterval(timerId);
+    clearInterval(blitzId);
+  }
+  else {
+    if(mode==="blitz")blitzId=setInterval(()=> {
+      if(paused||gameEnded)return;
+      blitzLeft-=.1;
+      showBlitzTime();
+      if(blitzLeft<=0) {
+        clearInterval(blitzId);
+        finishGame(t("blitzEnd"));
+      }
+    }
+    ,100);
+    else if(!locked)runTimer();
   }
 }
-
-// Przycisk z menu pauzy: po potwierdzeniu wraca do menu głównego
 function restartQuiz() {
-  if (!confirm(t("confirmRestart"))) return;   // "Anuluj" zostawia quiz w pauzie
-  resetQuiz();
+  if(confirm(t("confirmRestart")))resetQuiz();
 }
-
-/* =====================================================
-   EKRAN KOŃCOWY I RANKING
-   ===================================================== */
-
-// Pokazuje wynik końcowy z komentarzem zależnym od procentu poprawnych odpowiedzi
-function finish() {
-  document.getElementById("quiz").hidden = true;
-  document.getElementById("end").hidden = false;
-
-  const p = score / questions.length;   // ułamek poprawnych odpowiedzi (0 do 1)
-  const msg = p === 1 ? t("msgPerfect")
-            : p >= 0.7 ? t("msgGreat")
-            : p >= 0.4 ? t("msgOk")
-            : t("msgLow");
-  document.getElementById("result").textContent =
-    `${t("score")}: ${score} / ${questions.length}  ·  ⭐ ${points} ${t("pts")} — ${msg}`;
-  showRanking(pack);        // na start pokazujemy tabelę pakietu, który właśnie rozegrano
-}
-
-// Pokazuje tabelę wyników wybranego pakietu (nagłówek, zakładki i listę)
 function showRanking(p) {
-  rankPack = p;
-  document.getElementById("rank-title").textContent = t("rankingFor", { n: p });
-  buildRankTabs();
+  rankPack=p;
+  $("rank-title").textContent=t("rankingFor", {
+    n:p
+  }
+  )+(mode==="daily"?` · ${new Date().toISOString().slice(0,10)}`:"");
+  makeButtons("rank-tabs",PACKS.map(n=>( {
+    id:n,label:String(n)
+  }
+  )),rankPack,n=>showRanking(n));
   loadRanking();
 }
-
-// Tworzy zakładki pakietów nad tabelą wyników (5, 10, 20, 30)
-function buildRankTabs() {
-  const box = document.getElementById("rank-tabs");
-  box.innerHTML = "";
-  PACKS.forEach((p) => {
-    const b = document.createElement("button");
-    b.textContent = p;
-    b.classList.toggle("active", p === rankPack);
-    b.addEventListener("click", () => showRanking(p));
-    box.appendChild(b);
-  });
-}
-
-// Pobiera ranking wybranego quizu i pakietu z serwera i wyświetla go jako listę
 async function loadRanking() {
-  const res = await fetch(API + `/api/results?quiz=${quizId}&pack=${rankPack}`);
-  const data = await res.json();
-  const list = document.getElementById("ranking");
-  list.innerHTML = "";
-
-  // pusta tabela: pokazujemy informację zamiast pustego miejsca
-  if (data.length === 0) {
-    const li = document.createElement("li");
-    li.className = "empty";
-    li.textContent = t("noResults");
-    list.appendChild(li);
-    return;
-  }
-
-  data.forEach((r) => {
-    const li = document.createElement("li");
-    // "?? 0" podstawia 0 dla starych wyników zapisanych bez punktów
-    li.textContent =
-      `${r.name}: ⭐ ${r.points ?? 0} ${t("pts")} (${r.score}/${r.total}) — ${r.date}`;
-    list.appendChild(li);
-  });
-}
-
-/* =====================================================
-   REAKCJE NA KLIKNIĘCIA I KLAWISZE
-   ===================================================== */
-
-// Przycisk Start: chowa ekran startowy, pokazuje quiz i go uruchamia
-document.getElementById("start-btn").addEventListener("click", () => {
-  document.getElementById("start-screen").hidden = true;
-  document.getElementById("quiz").hidden = false;
-  start();
-});
-
-// "Zapisz wynik": wysyła imię i wynik do serwera, ale tylko raz na rozegraną partię
-document.getElementById("save").addEventListener("click", async () => {
-  if (saved) return;      // wynik z tej partii jest już zapisany
-  saved = true;           // ustawiamy od razu, żeby szybkie podwójne kliknięcie nie wysłało dwóch zapisów
-  setSaveLocked(true);    // blokujemy pole imienia i przycisk
-
-  const name = document.getElementById("name").value || t("anonymous");  // puste pole = "Anonim"
   try {
-    const res = await fetch(API + "/api/score", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },   // informacja, że wysyłamy JSON
-      body: JSON.stringify({
-        name, score, total: questions.length, points,
-        game_id: gameId, quiz: quizId, pack,              // quiz i pakiet decydują o tabeli wyników
-      }),
-    });
-    // 409 = serwer już ma ten wynik, więc nie traktujemy tego jak błędu
-    if (!res.ok && res.status !== 409) throw new Error("save failed");
-  } catch (err) {
-    saved = false;          // zapis się nie udał, więc odblokowujemy i można spróbować ponownie
-    setSaveLocked(false);
-    return;
+    const day=mode==="daily"?`&daily_date=${new Date().toISOString().slice(0,10)}`:"";
+    const r=await fetch(`${API}/api/results?quiz=${quizId}&pack=${rankPack}&mode=${mode}&category=${encodeURIComponent(category)}${day}`);
+    const data=await r.json();
+    const list=$("ranking");
+    list.innerHTML="";
+    if(!data.length) {
+      const li=document.createElement("li");
+      li.className="empty";
+      li.textContent=t("noResults");
+      list.appendChild(li);
+      return;
+    }
+    data.forEach(r=> {
+      const li=document.createElement("li");
+      li.textContent=`${r.name}: ⭐ ${r.points||0} ${t("pts")} (${r.score}/${r.total}) — ${r.date}`;
+      list.appendChild(li);
+    }
+    );
   }
-  showRanking(pack);        // po zapisie pokazujemy tabelę pakietu, w którym zagrano
-});
-
-// "Zagraj jeszcze raz": powrót do ekranu startowego
-document.getElementById("again").addEventListener("click", resetQuiz);
-
-// "Dalej": przejście do następnego pytania albo na ekran końcowy
-document.getElementById("next").addEventListener("click", () => {
-  document.getElementById("next").hidden = true;
-  locked = false;       // znów można odpowiadać
-  current++;
-  if (current < questions.length) showQuestion();
-  else finish();
-});
-
-// Przyciski wyboru języka (PL / EN) na ekranie startowym
-document.querySelectorAll(".lang button").forEach((b) => {
-  b.addEventListener("click", () => setLanguage(b.dataset.lang));
-});
-
-// Przyciski pauzy, wznowienia i powrotu do menu
-document.getElementById("pause-btn").addEventListener("click", togglePause);
-document.getElementById("resume-btn").addEventListener("click", togglePause);
-document.getElementById("restart-btn").addEventListener("click", restartQuiz);
-
-// Obsługa klawiatury: P = pauza, A-D = odpowiedź, Enter lub spacja = dalej
-document.addEventListener("keydown", (e) => {
-  if (document.getElementById("quiz").hidden) return;   // poza quizem klawisze nie działają
-  const key = e.key.toLowerCase();
-
-  if (key === "p") {                 // P włącza i wyłącza pauzę
+  catch(e) {
+  }
+}
+async function saveScore() {
+  if(saved||mode==="duel")return;
+  saved=true;
+  setSaveLocked(true);
+  const name=$("name").value.trim()||t("anonymous");
+  try {
+    const r=await fetch(`${API}/api/score`, {
+      method:"POST",headers: {
+        "Content-Type":"application/json"
+      }
+      ,body:JSON.stringify( {
+        name,score,total:mode==="blitz"?score:questions.length,points,game_id:gameId,quiz:quizId,pack,mode,category,daily_date:mode==="daily"?new Date().toISOString().slice(0,10):""
+      }
+      )
+    }
+    );
+    if(!r.ok&&r.status!==409)throw Error("save failed");
+    showRanking(pack);
+  }
+  catch(e) {
+    saved=false;
+    setSaveLocked(false);
+    alert(t("serverError"));
+  }
+}
+function applyTheme() {
+  const themes=["", "theme-blue", "theme-purple", "theme-green", "theme-light"];
+  document.body.classList.remove("theme-blue","theme-purple","theme-green","theme-light");
+  if(themes[themeIndex])document.body.classList.add(themes[themeIndex]);
+  $("theme-btn").textContent=themeIndex===4?"☀️":"🎨";
+  localStorage.setItem("theme",themeIndex);
+}
+$("start-btn").addEventListener("click",start);
+$("next").addEventListener("click",nextQuestion);
+$("again").addEventListener("click",resetQuiz);
+$("save").addEventListener("click",saveScore);
+$("pause-btn").addEventListener("click",togglePause);
+$("resume-btn").addEventListener("click",togglePause);
+$("restart-btn").addEventListener("click",restartQuiz);
+$("fifty-btn").addEventListener("click",useFifty);
+$("time-btn").addEventListener("click",useTime);
+$("sound-btn").addEventListener("click",()=> {
+  soundOn=!soundOn;
+  $("sound-btn").textContent=soundOn?"🔊":"🔇";
+}
+);
+$("theme-btn").addEventListener("click",()=> {
+  themeIndex=(themeIndex+1)%5;
+  applyTheme();
+}
+);
+document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>setLanguage(b.dataset.lang)));
+document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>chooseMode(b.dataset.mode)));
+document.querySelectorAll("[data-difficulty]").forEach(b=>b.addEventListener("click",()=>chooseDifficulty(b.dataset.difficulty)));
+document.addEventListener("keydown",e=> {
+  if($("quiz").hidden)return;
+  const k=e.key.toLowerCase();
+  if(k==="p") {
     togglePause();
     return;
   }
-  if (paused) return;                // podczas pauzy pozostałe klawisze są zablokowane
-
-  if (!locked && ["a", "b", "c", "d"].includes(key)) {
-    const idx = key.charCodeAt(0) - 97;   // kod litery "a" to 97, więc a=0, b=1, c=2, d=3
-    const count = document.querySelectorAll("#answers button").length;
-    if (idx < count) answer(idx);         // ignorujemy literę, jeśli pytanie ma mniej odpowiedzi
-  } else if (locked && (e.key === "Enter" || e.key === " ")) {
-    e.preventDefault();                   // spacja nie przewija strony
-    document.getElementById("next").click();
+  if(paused)return;
+  if(!locked&&["a","b","c","d"].includes(k)) {
+    const idx=k.charCodeAt(0)-97;
+    if(idx<$("answers").children.length)answer(idx);
   }
-});
-
-/* =====================================================
-   START PROGRAMU
-   ===================================================== */
-applyTexts();         // wpisz tłumaczenia w interfejs
-buildPackButtons();   // zbuduj przyciski pakietów 5, 10, 20, 30
-loadQuizzes();        // pobierz listę quizów, a potem odśwież ekran startowy
+  else if(locked&&(e.key==="Enter"||e.key===" ")) {
+    e.preventDefault();
+    $("next").click();
+  }
+}
+);
+applyTexts();
+applyTheme();
+chooseMode("classic");
+chooseDifficulty("medium");
+loadQuizzes();

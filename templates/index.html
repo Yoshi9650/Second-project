@@ -1,125 +1,220 @@
 <!DOCTYPE html>
-<!-- Informuje przeglądarkę, że to dokument HTML5 -->
 <html lang="pl">
-<head>
-  <!-- Kodowanie znaków: dzięki temu działają polskie litery -->
-  <meta charset="UTF-8">
-  <!-- Dopasowuje stronę do szerokości ekranu telefonu -->
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Tytuł widoczny na karcie przeglądarki -->
-  <title>Quiz</title>
-  <!-- Podpięcie pliku ze stylami (wygląd strony) -->
-  <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-
-  <!-- Karta: główny pojemnik, w którym leży cały quiz -->
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <meta content="#111827" name="theme-color"/>
+  <title>
+   Quiz
+  </title>
+  <link href="/static/style.css" rel="stylesheet"/>
+ </head>
+ <body>
   <div class="card">
-
-    <!-- ===== NAGŁÓWEK: logo, tytuł wybranego quizu i liczba pytań w bazie ===== -->
-    <div class="top">
-      <div class="logo-title">
-        <!-- Ikonka telefonu obok tytułu (poza h1, żeby gradient jej nie zamalował) -->
-        <span class="logo">📱</span>
-        <div class="titles">
-          <!-- Tytuł: wpisuje JS (nazwa wybranego quizu w wybranym języku) -->
-          <h1 id="main-title" data-i18n="title"></h1>
-          <!-- Liczba pytań w bazie wybranego quizu: wypełnia JS -->
-          <p id="db-info"></p>
-        </div>
-      </div>
+   <header class="top">
+    <div class="logo-title">
+     <span class="logo">
+      📱
+     </span>
+     <div class="titles">
+      <h1 data-i18n="title" id="main-title">
+       Quiz o technologii
+      </h1>
+      <p id="db-info">
+      </p>
+     </div>
     </div>
-
-    <!-- ===== EKRAN STARTOWY: język, quiz, liczba pytań i przycisk Start ===== -->
-    <div id="start-screen">
-      <!-- Wybór języka; data-lang mówi JS, który język wybrać -->
-      <p id="lang-label" data-i18n="chooseLang"></p>
-      <div class="lang">
-        <button data-lang="pl">PL</button>
-        <button data-lang="en">EN</button>
-      </div>
-
-      <!-- Wybór quizu: ukryty, dopóki jest tylko jeden quiz.
-           Przyciski dodaje JS na podstawie listy z serwera (/api/quizzes) -->
-      <div id="quiz-picker" hidden>
-        <p data-i18n="chooseQuiz"></p>
-        <div id="quiz-buttons" class="choices"></div>
-      </div>
-
-      <!-- Wybór liczby pytań (5, 10, 20, 30); przyciski dodaje JS -->
-      <p data-i18n="choosePack"></p>
-      <div id="pack-buttons" class="choices"></div>
-
-      <!-- Przycisk rozpoczynający quiz -->
-      <button id="start-btn" data-i18n="start"></button>
-
-      <!-- Stopka: autor i link do GitHuba -->
-      <div class="footer">
-        <span>© Michał Kuczyński 2026</span>
-        <!-- Zamień adres w href na link do swojego repozytorium -->
-        <a id="github-link" href="https://github.com/TWOJ-LOGIN/TWOJ-REPO"
-           target="_blank" rel="noopener noreferrer">GitHub</a>
-      </div>
+    <div class="top-actions">
+     <button class="small-btn" id="theme-btn" title="Motyw" type="button">
+      🎨
+     </button>
+     <button class="small-btn" id="sound-btn" title="D&zacute;wi&eogon;k" type="button">
+      🔊
+     </button>
     </div>
-
-    <!-- ===== EKRAN QUIZU: widoczny podczas gry ===== -->
-    <div id="quiz" hidden>
-      <!-- Przycisk pauzy (podczas pauzy ukryty razem z resztą quizu) -->
-      <button id="pause-btn" data-i18n="pause"></button>
-
-      <!-- Pasek postępu quizu (zewnętrzny pasek + wypełnienie, którym steruje JS) -->
-      <div class="bar"><div id="bar-fill"></div></div>
-      <!-- Napis "Pytanie X z Y", punkty i seria -->
-      <p id="progress"></p>
-
-      <!-- Odliczanie czasu: pasek i liczba sekund obok niego -->
-      <div class="timer-row">
-        <div class="timer"><div id="timer-fill"></div></div>
-        <span id="timer-text"></span>
-      </div>
-
-      <!-- Treść pytania (wpisuje JS) -->
-      <h2 id="question"></h2>
-      <!-- Tu JS tworzy przyciski z odpowiedziami A, B, C -->
-      <div id="answers"></div>
-
-      <!-- Komunikat po odpowiedzi; hidden = ukryty na starcie -->
-      <p id="feedback" hidden></p>
-      <!-- Wyjaśnienie odpowiedzi (jeśli pytanie je ma) -->
-      <p id="explanation" hidden></p>
-      <!-- Przycisk przejścia do następnego pytania, pokazywany po odpowiedzi -->
-      <button id="next" hidden></button>
-
-      <!-- Ekran pauzy: widoczny tylko wtedy, gdy quiz jest wstrzymany -->
-      <div id="pause-screen" hidden>
-        <h2 id="pause-title" data-i18n="paused"></h2>
-        <button id="resume-btn" data-i18n="resume"></button>
-        <!-- Powrót do menu głównego (ekran startowy) -->
-        <button id="restart-btn" data-i18n="restart"></button>
-      </div>
+   </header>
+   <section id="start-screen">
+    <p data-i18n="chooseLang" id="lang-label">
+     Wybierz j&eogon;zyk
+    </p>
+    <div class="lang">
+     <button data-lang="pl" type="button">
+      PL
+     </button>
+     <button data-lang="en" type="button">
+      EN
+     </button>
     </div>
-
-    <!-- ===== EKRAN KOŃCOWY: ukryty, JS pokazuje go po ostatnim pytaniu ===== -->
-    <div id="end" hidden>
-      <!-- Wynik końcowy -->
-      <h2 id="result"></h2>
-      <!-- Pole na imię; data-i18n-placeholder = podpowiedź w polu zależna od języka -->
-      <input id="name" data-i18n-placeholder="namePlaceholder">
-      <!-- Zapis wyniku do rankingu (można zapisać tylko raz na partię) -->
-      <button id="save" data-i18n="save"></button>
-      <!-- Powrót do ekranu startowego -->
-      <button id="again" data-i18n="again"></button>
-
-      <!-- Ranking: nagłówek z liczbą pytań pakietu, zakładki pakietów i lista wyników -->
-      <h3 id="rank-title"></h3>
-      <div id="rank-tabs" class="choices"></div>
-      <ol id="ranking"></ol>
+    <div hidden="" id="quiz-picker">
+     <p data-i18n="chooseQuiz">
+      Wybierz quiz
+     </p>
+     <div class="choices" id="quiz-buttons">
+     </div>
     </div>
-
+    <div class="field-group">
+     <p data-i18n="choosePack">
+      Liczba pyta&nacute;
+     </p>
+     <div class="choices" id="pack-buttons">
+     </div>
+    </div>
+    <div class="field-group">
+     <p data-i18n="chooseCategory">
+      Kategoria
+     </p>
+     <div class="choices" id="category-buttons">
+     </div>
+    </div>
+    <div class="field-group">
+     <p data-i18n="chooseMode">
+      Tryb gry
+     </p>
+     <div class="choices" id="mode-buttons">
+      <button class="active" data-mode="classic" type="button">
+       Klasyczny
+      </button>
+      <button data-mode="survival" type="button">
+       Przetrwanie
+      </button>
+      <button data-mode="blitz" type="button">
+       Blitz 60 s
+      </button>
+      <button data-mode="duel" type="button">
+       2 graczy
+      </button>
+      <button data-mode="daily" type="button">
+       Dzienne wyzwanie
+      </button>
+     </div>
+    </div>
+    <div class="field-group">
+     <p data-i18n="chooseDifficulty">
+      Trudno&sacute;&cacute;
+     </p>
+     <div class="choices" id="difficulty-buttons">
+      <button data-difficulty="easy" type="button">
+       &Lstrok;atwy
+      </button>
+      <button class="active" data-difficulty="medium" type="button">
+       &Sacute;redni
+      </button>
+      <button data-difficulty="hard" type="button">
+       Trudny
+      </button>
+     </div>
+    </div>
+    <div class="player-config" hidden="" id="players-config">
+     <label>
+      <span data-i18n="player1">
+       Gracz 1
+      </span>
+      <input id="player1-name" maxlength="24" placeholder="Gracz 1"/>
+     </label>
+     <label>
+      <span data-i18n="player2">
+       Gracz 2
+      </span>
+      <input id="player2-name" maxlength="24" placeholder="Gracz 2"/>
+     </label>
+    </div>
+    <button data-i18n="start" id="start-btn" type="button">
+     Start
+    </button>
+    <div class="footer">
+     <span>
+      &copy; Micha&lstrok; Kuczy&nacute;ski 2026
+     </span>
+     <a href="https://github.com/TWOJ-LOGIN/TWOJ-REPO" id="github-link" rel="noopener noreferrer" target="_blank">
+      GitHub
+     </a>
+    </div>
+   </section>
+   <section hidden="" id="quiz">
+    <div class="quiz-toolbar">
+     <span id="mode-label">
+     </span>
+     <button data-i18n="pause" id="pause-btn" type="button">
+      ⏸ Pauza
+     </button>
+    </div>
+    <div class="bar">
+     <div id="bar-fill">
+     </div>
+    </div>
+    <p id="progress">
+    </p>
+    <div class="timer-row">
+     <div class="timer">
+      <div id="timer-fill">
+      </div>
+     </div>
+     <span id="timer-text">
+     </span>
+    </div>
+    <div class="lifelines" id="lifelines">
+     <button id="fifty-btn" type="button">
+      🌓 50/50
+     </button>
+     <button id="time-btn" type="button">
+      ⏱ +10 s
+     </button>
+    </div>
+    <h2 id="question">
+    </h2>
+    <img alt="" hidden="" id="question-image"/>
+    <div id="answers">
+    </div>
+    <p hidden="" id="feedback">
+    </p>
+    <p hidden="" id="explanation">
+    </p>
+    <div aria-live="polite" class="badge-live" id="badge-live">
+    </div>
+    <button hidden="" id="next" type="button">
+    </button>
+    <div hidden="" id="pause-screen">
+     <h2 data-i18n="paused" id="pause-title">
+      Pauza
+     </h2>
+     <button data-i18n="resume" id="resume-btn" type="button">
+      ▶ Wzn&oacute;w
+     </button>
+     <button data-i18n="restart" id="restart-btn" type="button">
+      &orarr; Wr&oacute;&cacute; do menu
+     </button>
+    </div>
+   </section>
+   <section hidden="" id="end">
+    <div aria-hidden="true" id="confetti">
+    </div>
+    <h2 id="result">
+    </h2>
+    <div class="badges" id="badges">
+    </div>
+    <div hidden="" id="duel-result">
+    </div>
+    <label class="name-label">
+     <span data-i18n="namePlaceholder">
+      Twoje imi&eogon;
+     </span>
+     <input data-i18n-placeholder="namePlaceholder" id="name" maxlength="40" placeholder="Twoje imi&eogon;"/>
+    </label>
+    <button data-i18n="save" id="save" type="button">
+     Zapisz wynik
+    </button>
+    <button data-i18n="again" id="again" type="button">
+     Zagraj jeszcze raz
+    </button>
+    <h3 id="rank-title">
+    </h3>
+    <div class="choices" id="rank-tabs">
+    </div>
+    <ol id="ranking">
+    </ol>
+   </section>
   </div>
-  <!-- Koniec karty -->
-
-  <!-- Skrypt na końcu body, bo musi się wykonać, gdy wszystkie elementy już istnieją -->
-  <script src="/static/script.js"></script>
-</body>
+  <script src="/static/script.js">
+  </script>
+ </body>
 </html>
