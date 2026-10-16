@@ -1,8 +1,11 @@
+# Flask obsługuje żądania HTTP, zwraca JSON i renderuje stronę HTML.
 from flask import Flask, jsonify, request, render_template
 from datetime import datetime, date
 import json, random, os, hashlib
 
+# Tworzy aplikację Flask. Pliki HTML są domyślnie szukane w katalogu templates.
 app = Flask(__name__)
+# Dozwolone języki i zestawy długości quizu dostępne w interfejsie.
 LANGS = ["pl", "en"]
 PACKS = [5, 10, 20, 30]
 DEFAULT_PACK = 10
@@ -15,6 +18,7 @@ QUIZZES = {
     },
 }
 
+# Dodaje nagłówki CORS do odpowiedzi, aby frontend uruchomiony na innym porcie mógł pytać API.
 @app.after_request
 def add_cors_headers(response):
     # Przy uruchamianiu lokalnym pozwala używać Live Servera. Na publicznym serwerze
@@ -24,6 +28,7 @@ def add_cors_headers(response):
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     return response
 
+# Wczytuje plik JSON. Gdy pliku brakuje albo zawiera błędny JSON, zwraca wartość domyślną.
 def load_json(path, default):
     try:
         with open(path, encoding="utf-8") as f:
@@ -31,12 +36,15 @@ def load_json(path, default):
     except (FileNotFoundError, json.JSONDecodeError):
         return default
 
+# Sprawdza język z parametrów żądania i w razie potrzeby wybiera polski.
 def clean_lang(value):
     return value if value in LANGS else "pl"
 
+# Ogranicza wybór quizu do identyfikatorów skonfigurowanych w QUIZZES.
 def clean_quiz(value):
     return value if value in QUIZZES else DEFAULT_QUIZ
 
+# Sprawdza liczbę pytań; nieobsługiwana wartość jest zastępowana domyślną.
 def clean_pack(value):
     try:
         pack = int(value)
@@ -44,12 +52,16 @@ def clean_pack(value):
         return DEFAULT_PACK
     return pack if pack in PACKS else DEFAULT_PACK
 
+# Odczytuje bazę pytań dla wybranego quizu i języka.
 def load_questions(quiz, lang):
     return load_json(QUIZZES[quiz]["file"].format(lang=lang), [])
 
+# Zwraca znormalizowaną nazwę kategorii pytania.
 def category_of(question):
     return str(question.get("category", "all")).strip().lower()
 
+# Filtruje pytania po kategorii, tasuje je i zwraca wybraną liczbę.
+# Wyzwanie dzienne używa stałego ziarna, więc danego dnia kolejność jest powtarzalna.
 def select_questions(quiz, lang, pack, category="all", daily=False):
     qs = load_questions(quiz, lang)
     if category and category != "all":
@@ -64,10 +76,12 @@ def select_questions(quiz, lang, pack, category="all", daily=False):
         random.shuffle(qs)
     return qs[:min(pack, len(qs))]
 
+# Strona główna: Flask zwraca szablon HTML interfejsu quizu.
 @app.route("/")
 def index():
     return render_template("index.html")
 
+# API: lista quizów, które mają przynajmniej jedno pytanie w wybranym języku.
 @app.route("/api/quizzes")
 def quizzes():
     lang = clean_lang(request.args.get("lang"))
@@ -78,6 +92,7 @@ def quizzes():
             result.append({"id": quiz_id, "title": info["title"], "count": count})
     return jsonify(result)
 
+# API: zwraca kategorie znalezione w bazie pytań wraz z etykietami PL/EN.
 @app.route("/api/categories")
 def categories():
     lang = clean_lang(request.args.get("lang"))
@@ -93,6 +108,7 @@ def categories():
         result.append({"id": c, "title": labels.get(c, {"pl": c.replace("-", " ").title(), "en": c.replace("-", " ").title()})})
     return jsonify(result)
 
+# API: pobiera parametry quizu i zwraca pasującą pulę pytań.
 @app.route("/api/questions")
 def questions():
     lang = clean_lang(request.args.get("lang"))
@@ -102,6 +118,7 @@ def questions():
     daily = request.args.get("daily", "0") == "1"
     return jsonify(select_questions(quiz, lang, pack, category, daily))
 
+# API: zapisuje wynik gry. OPTIONS obsługuje wstępne zapytanie CORS przeglądarki.
 @app.route("/api/score", methods=["POST", "OPTIONS"])
 def save_score():
     if request.method == "OPTIONS":
@@ -111,6 +128,7 @@ def save_score():
     pack = clean_pack(data.get("pack"))
     mode = str(data.get("mode", "classic"))[:24]
     daily_date = str(data.get("daily_date", ""))[:10] if mode == "daily" else ""
+    # Odczytuje istniejące wyniki; identyfikator gry zapobiega zapisaniu tego samego wyniku dwa razy.
     results = load_json(RESULTS_FILE, [])
     game_id = str(data.get("game_id", ""))[:100]
     if game_id and any(r.get("game_id") == game_id for r in results):
@@ -133,6 +151,7 @@ def save_score():
         json.dump(results, f, ensure_ascii=False, indent=2)
     return jsonify({"ok": True})
 
+# API: pobiera ranking i filtruje go według quizu, długości, trybu, kategorii i daty.
 @app.route("/api/results")
 def results():
     quiz = clean_quiz(request.args.get("quiz"))
@@ -150,5 +169,6 @@ def results():
     res.sort(key=lambda r: (r.get("points", 0), r.get("score", 0)), reverse=True)
     return jsonify(res[:10])
 
+# Uruchamia serwer developerski po bezpośrednim wykonaniu: python app.py.
 if __name__ == "__main__":
     app.run(debug=True)

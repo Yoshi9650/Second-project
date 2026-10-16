@@ -1,6 +1,9 @@
+// Ustala, czy strona działa lokalnie; przy Live Serverze API może działać na porcie 5000.
 const isLocal = ["127.0.0.1", "localhost"].includes(location.hostname);
 const API = (isLocal && location.port && location.port !== "5000") ? "http://127.0.0.1:5000" : "";
+// Dozwolone rozmiary klasycznego zestawu pytań.
 const PACKS = [5, 10, 20, 30];
+// Teksty interfejsu w obu językach. Funkcja t() pobiera stąd etykiety i wstawia wartości do {placeholderów}.
 const TEXTS =  {
   pl: {
     title:"Quiz o technologii",chooseLang:"Wybierz język",chooseQuiz:"Wybierz quiz",choosePack:"Liczba pytań",chooseCategory:"Kategoria",chooseMode:"Tryb gry",chooseDifficulty:"Trudność",start:"Start",pause:"⏸ Pauza",paused:"Pauza",resume:"▶ Wznów",restart:"↻ Wróć do menu",next:"Dalej →",seeResult:"Zobacz wynik",question:"Pytanie {n} z {total}",pts:"pkt",streak:"seria",correct:"✅ Dobrze! +{points} pkt",wrong:"❌ Niestety źle",timeout:"⏰ Czas minął!",score:"Wynik",msgPerfect:"Perfekcyjnie! 🏆",msgGreat:"Świetnie! 🔥",msgOk:"Nieźle, spróbuj jeszcze raz",msgLow:"Trochę ćwiczeń i będzie dobrze 😄",save:"Zapisz wynik",saved:"Zapisano ✓",again:"Zagraj jeszcze raz",namePlaceholder:"Twoje imię",anonymous:"Anonim",rankingFor:"Ranking – {n} pytań",noResults:"Brak wyników w tym rankingu.",noQuestions:"Brak pytań dla tego wyboru.",dbSize:"Pytań w bazie: {n}",serverError:"Brak połączenia z serwerem. Uruchom: python app.py",confirmRestart:"Wrócić do menu? Stracisz dotychczasowy wynik.",classic:"Klasyczny",survival:"Przetrwanie",blitz:"Blitz",duel:"Dwóch graczy",daily:"Dzienne wyzwanie",easy:"Łatwy",medium:"Średni",hard:"Trudny",player1:"Gracz 1",player2:"Gracz 2",streakBadge:"🔥 10 z rzędu",perfectBadge:"💎 Bez błędu",fastBadge:"⚡ Szybkie palce",fiftyUsed:"50/50 wykorzystane",timeUsed:"Dodatkowe 10 sekund wykorzystane",winner:"Wygrywa: {name}!",draw:"Remis!",turn:"Tura: {name}",survivalEnd:"Koniec przetrwania!",blitzEnd:"Czas Blitza minął!",multiplier:"mnożnik",choose:"Wybierz"
@@ -10,18 +13,23 @@ const TEXTS =  {
     title:"Tech Quiz",chooseLang:"Choose language",chooseQuiz:"Choose a quiz",choosePack:"Number of questions",chooseCategory:"Category",chooseMode:"Game mode",chooseDifficulty:"Difficulty",start:"Start",pause:"⏸ Pause",paused:"Paused",resume:"▶ Resume",restart:"↻ Back to menu",next:"Next →",seeResult:"See result",question:"Question {n} of {total}",pts:"pts",streak:"streak",correct:"✅ Correct! +{points} pts",wrong:"❌ Wrong answer",timeout:"⏰ Time's up!",score:"Score",msgPerfect:"Perfect! 🏆",msgGreat:"Great job! 🔥",msgOk:"Not bad, try again",msgLow:"A bit of practice and you'll get there 😄",save:"Save score",saved:"Saved ✓",again:"Play again",namePlaceholder:"Your name",anonymous:"Anonymous",rankingFor:"Leaderboard – {n} questions",noResults:"No scores in this leaderboard yet.",dbSize:"Questions in database: {n}",serverError:"Can't reach the server. Run: python app.py",confirmRestart:"Go back to the menu? Your current result will be lost.",classic:"Classic",survival:"Survival",blitz:"Blitz",duel:"Two players",daily:"Daily challenge",easy:"Easy",medium:"Medium",hard:"Hard",player1:"Player 1",player2:"Player 2",streakBadge:"🔥 10 in a row",perfectBadge:"💎 Flawless",fastBadge:"⚡ Quick fingers",fiftyUsed:"50/50 used",timeUsed:"Extra 10 seconds used",winner:"Winner: {name}!",draw:"It's a draw!",turn:"Turn: {name}",survivalEnd:"Survival over!",blitzEnd:"Blitz time is up!",multiplier:"multiplier",choose:"Choose"
   }
 };
+// Ustawienia interfejsu i gry. Część ustawień jest zapamiętywana w localStorage przeglądarki.
 let lang = localStorage.getItem("lang") || (navigator.language.startsWith("pl") ? "pl" : "en");
 let quizId = localStorage.getItem("quiz") || "tech", pack = Number(localStorage.getItem("pack")) || 10;
 if (!PACKS.includes(pack)) pack = 10;
 let category = "all", mode = "classic", difficulty = "medium", quizList = [], categories = [], rankPack = pack;
+// Stan bieżącej rozgrywki: pytania, wynik, zegary, koła ratunkowe, odznaki i gracze.
 let questions=[], current=0, score=0, streak=0, points=0, locked=false, paused=false, saved=false, gameId="", timeLeft=15, timerId=null, blitzLeft=60, blitzId=null, startAnswerAt=0, perfect=true, quick=false, usedFifty=false, usedTime=false, badgesEarned=[], playerIndex=0, players=[], playerScores=[0,0], turnCorrect=[0,0], gameEnded=false, soundOn=true, themeIndex=Number(localStorage.getItem("theme")||0), roundScore=0;
+// Czas na odpowiedź dla każdego poziomu trudności (w sekundach).
 const TIMES= {
   easy:25,medium:15,hard:10
 }
 , MULT= {
   easy:1,medium:1.25,hard:1.5
 };
+// Skrót do pobierania elementu HTML po jego identyfikatorze.
 const $=id=>document.getElementById(id);
+// Zwraca tekst w wybranym języku i podmienia placeholdery, np. {n}.
 function t(k,v= {
 }
 ) {
@@ -29,12 +37,15 @@ function t(k,v= {
   Object.keys(v).forEach(a=>s=s.replaceAll(`{${a}}`,v[a]));
   return s;
 }
+// Tworzy unikalny identyfikator, aby serwer nie zapisał tego samego wyniku dwa razy.
 function newGameId() {
   return crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random();
 }
+// Znajduje aktualnie wybrany quiz na liście pobranej z serwera.
 function currentQuiz() {
   return quizList.find(q=>q.id===quizId);
 }
+// Ustawia teksty strony zgodnie z językiem oraz aktualnym tytułem quizu.
 function applyTexts() {
   document.documentElement.lang=lang;
   document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=t(el.dataset.i18n));
@@ -43,12 +54,14 @@ function applyTexts() {
   const q=currentQuiz();
   if(q)$("main-title").textContent=q.title[lang]||q.title.pl;
 }
+// Zmienia język, zapisuje wybór i odświeża listę quizów.
 function setLanguage(l) {
   lang=l;
   localStorage.setItem("lang",l);
   applyTexts();
   loadQuizzes();
 }
+// Buduje grupę przycisków wyboru (np. liczba pytań lub kategoria).
 function makeButtons(container,items,selected,onSelect) {
   const box=$(container);
   box.innerHTML="";
@@ -62,6 +75,7 @@ function makeButtons(container,items,selected,onSelect) {
   }
   );
 }
+// Odświeża ustawienia na ekranie startowym i zaznacza wybrane opcje.
 function updateStart() {
   const q=currentQuiz();
   $("db-info").textContent=t("dbSize", {
@@ -87,6 +101,7 @@ function updateStart() {
   }
   );
 }
+// Pobiera listę quizów z API i tworzy przyciski wyboru.
 async function loadQuizzes() {
   try {
     let r=await fetch(`${API}/api/quizzes?lang=${lang}`);
@@ -112,6 +127,7 @@ async function loadQuizzes() {
     $("db-info").textContent=t("serverError");
   }
 }
+// Pobiera kategorie dla aktualnego quizu i odświeża ich przyciski.
 async function loadCategories() {
   try {
     const r=await fetch(`${API}/api/categories?lang=${lang}&quiz=${quizId}`);
@@ -129,15 +145,18 @@ async function loadCategories() {
   applyTexts();
   updateStart();
 }
+// Wybiera tryb gry i pokazuje dodatkowe ustawienia, jeśli są potrzebne.
 function chooseMode(m) {
   mode=m;
   document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));
   $("players-config").hidden=mode!=="duel";
 }
+// Zmienia poziom trudności i podświetla jego przycisk.
 function chooseDifficulty(d) {
   difficulty=d;
   document.querySelectorAll("[data-difficulty]").forEach(b=>b.classList.toggle("active",b.dataset.difficulty===d));
 }
+// Przywraca początkowe wartości zmiennych przed rozpoczęciem nowej rundy.
 function resetState() {
   clearInterval(timerId);
   clearInterval(blitzId);
@@ -173,6 +192,7 @@ function resetState() {
   $("save").textContent=t("save");
   $("duel-result").hidden=true;
 }
+// Rozpoczyna grę: pobiera pytania, ustawia ekran i uruchamia właściwy zegar.
 async function start() {
   resetState();
   gameId=newGameId();
@@ -213,14 +233,17 @@ async function start() {
   }
   showQuestion();
 }
+// Aktualizuje informację o czasie pozostałym w trybie Blitz.
 function showBlitzTime() {
   $("timer-text").textContent=`${Math.max(0,Math.ceil(blitzLeft))} s`;
   $("timer-fill").style.width=`${Math.max(0,blitzLeft/60*100)}%`;
   $("timer-fill").classList.toggle("low",blitzLeft<=10);
 }
+// Zwraca czas na odpowiedź uwzględniający wybrany poziom trudności.
 function questionTime() {
   return TIMES[difficulty]||15;
 }
+// Aktualizuje pasek postępu i opis numeru pytania.
 function updateProgress() {
   let extra=streak>=10?" ×3":streak>=5?" ×2":"";
   let player=mode==="duel"?` · ${players[playerIndex]}`:"";
@@ -230,12 +253,14 @@ function updateProgress() {
   )+` · ⭐ ${points} ${t("pts")}`)+(streak>=2?` · 🔥 ${streak}${extra}`:"")+player;
   $("bar-fill").style.width=`${Math.min(100,current/questions.length*100)}%`;
 }
+// Wyświetla pozostały czas na odpowiedź oraz stan paska czasu.
 function showTime() {
   if(mode==="blitz")return;
   $("timer-text").textContent=`${Math.max(0,Math.ceil(timeLeft))} s`;
   $("timer-fill").style.width=`${Math.max(0,timeLeft/questionTime()*100)}%`;
   $("timer-fill").classList.toggle("low",timeLeft<=5);
 }
+// Obsługuje tykanie zegara i reakcję na upłynięcie czasu.
 function runTimer() {
   clearInterval(timerId);
   if(mode==="blitz")return;
@@ -250,11 +275,13 @@ function runTimer() {
   }
   ,100);
 }
+// Zatrzymuje poprzedni zegar pytania i uruchamia nowy.
 function startTimer() {
   timeLeft=questionTime();
   showTime();
   runTimer();
 }
+// Wstawia treść pytania, obrazek i przyciski odpowiedzi do interfejsu.
 function showQuestion() {
   if(gameEnded)return;
   if(current>=questions.length) {
@@ -293,6 +320,7 @@ function showQuestion() {
   startAnswerAt=performance.now();
   if(mode!=="blitz")startTimer();
 }
+// Odtwarza krótki dźwięk dla poprawnej lub błędnej odpowiedzi, jeśli dźwięk jest włączony.
 function playTone(ok) {
   if(!soundOn)return;
   try {
@@ -308,6 +336,7 @@ function playTone(ok) {
   catch(e) {
   }
 }
+// Sprawdza wybraną odpowiedź, aktualizuje punkty/serię i blokuje wielokrotne kliknięcie.
 function answer(i) {
   if(locked||paused||gameEnded)return;
   locked=true;
@@ -370,6 +399,7 @@ function answer(i) {
   }
   $("next").hidden=false;
 }
+// Koło ratunkowe 50/50 usuwa dwie błędne odpowiedzi; można go użyć raz na grę.
 function useFifty() {
   if(usedFifty||locked||paused)return;
   const q=questions[current],buttons=[...document.querySelectorAll("#answers button")],wrong=buttons.map((_,i)=>i).filter(i=>i!==Number(q.correct));
@@ -380,6 +410,7 @@ function useFifty() {
   usedFifty=true;
   $("fifty-btn").disabled=true;
 }
+// Dodaje 10 sekund do zegara pytania; można użyć tej pomocy raz na grę.
 function useTime() {
   if(usedTime||locked||paused||mode==="blitz")return;
   usedTime=true;
@@ -387,6 +418,7 @@ function useTime() {
   showTime();
   $("time-btn").disabled=true;
 }
+// Przechodzi do kolejnego pytania albo kończy rundę, gdy warunki trybu są spełnione.
 function nextQuestion() {
   if(!locked)return;
   $("next").hidden=true;
@@ -398,6 +430,7 @@ function nextQuestion() {
   }
   showQuestion();
 }
+// Sprawdza warunki zdobycia odznak i pokazuje te, które gracz zdobył.
 function awardBadges() {
   badgesEarned=[];
   if(streak>=10)badgesEarned.push(t("streakBadge"));
@@ -412,6 +445,7 @@ function awardBadges() {
   }
   );
 }
+// Tworzy dekoracyjną animację konfetti na ekranie wyniku.
 function confetti() {
   const root=$("confetti");
   root.innerHTML="";
@@ -426,6 +460,7 @@ function confetti() {
   }
   setTimeout(()=>root.innerHTML="",4000);
 }
+// Kończy rozgrywkę, zatrzymuje zegary i pokazuje podsumowanie.
 function finishGame(reason="") {
   if(gameEnded)return;
   gameEnded=true;
@@ -457,11 +492,13 @@ function finishGame(reason="") {
   if(mode==="classic"&&perfect&&score===questions.length)confetti();
   showRanking(pack);
 }
+// Włącza lub wyłącza przycisk zapisu wyniku.
 function setSaveLocked(v) {
   $("name").disabled=v;
   $("save").disabled=v;
   $("save").textContent=v?t("saved"):t("save");
 }
+// Wraca do ekranu startowego i przygotowuje aplikację do kolejnej gry.
 function resetQuiz() {
   clearInterval(timerId);
   clearInterval(blitzId);
@@ -477,6 +514,7 @@ function resetQuiz() {
   $("save").textContent=t("save");
   updateStart();
 }
+// Wstrzymuje lub wznawia rozgrywkę i odpowiednie zegary.
 function togglePause() {
   if($("quiz").hidden||gameEnded)return;
   paused=!paused;
@@ -500,9 +538,11 @@ function togglePause() {
     else if(!locked)runTimer();
   }
 }
+// Pyta o potwierdzenie i wraca do menu, jeśli gracz chce przerwać bieżącą grę.
 function restartQuiz() {
   if(confirm(t("confirmRestart")))resetQuiz();
 }
+// Rysuje listę wyników rankingu w HTML.
 function showRanking(p) {
   rankPack=p;
   $("rank-title").textContent=t("rankingFor", {
@@ -515,6 +555,7 @@ function showRanking(p) {
   )),rankPack,n=>showRanking(n));
   loadRanking();
 }
+// Pobiera ranking dla wybranych ustawień i wyświetla go na ekranie końcowym.
 async function loadRanking() {
   try {
     const day=mode==="daily"?`&daily_date=${new Date().toISOString().slice(0,10)}`:"";
@@ -539,6 +580,7 @@ async function loadRanking() {
   catch(e) {
   }
 }
+// Wysyła wynik do serwera i aktualizuje informację o zapisie.
 async function saveScore() {
   if(saved||mode==="duel")return;
   saved=true;
@@ -564,6 +606,7 @@ async function saveScore() {
     alert(t("serverError"));
   }
 }
+// Ustawia motyw kolorystyczny zapisany w przeglądarce.
 function applyTheme() {
   const themes=["", "theme-blue", "theme-purple", "theme-green", "theme-light"];
   document.body.classList.remove("theme-blue","theme-purple","theme-green","theme-light");
@@ -571,6 +614,7 @@ function applyTheme() {
   $("theme-btn").textContent=themeIndex===4?"☀️":"🎨";
   localStorage.setItem("theme",themeIndex);
 }
+// Podłączenie zdarzeń interfejsu: przyciski startu, nawigacji, pomocy i ustawień.
 $("start-btn").addEventListener("click",start);
 $("next").addEventListener("click",nextQuestion);
 $("again").addEventListener("click",resetQuiz);
@@ -593,6 +637,7 @@ $("theme-btn").addEventListener("click",()=> {
 document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>setLanguage(b.dataset.lang)));
 document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>chooseMode(b.dataset.mode)));
 document.querySelectorAll("[data-difficulty]").forEach(b=>b.addEventListener("click",()=>chooseDifficulty(b.dataset.difficulty)));
+// Skróty klawiaturowe do odpowiadania i obsługi quizu.
 document.addEventListener("keydown",e=> {
   if($("quiz").hidden)return;
   const k=e.key.toLowerCase();

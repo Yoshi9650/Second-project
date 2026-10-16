@@ -1,3 +1,4 @@
+/* Kolory i zmienne globalne używane w całym interfejsie. */
 :root {
   --text:#f8fafc;
   --muted:#94a3b8;
@@ -12,6 +13,7 @@
 * {
   box-sizing:border-box
 }
+/* Układ całej strony i tło aplikacji. */
 body {
   margin:0;
   min-height:100vh;
@@ -49,6 +51,7 @@ body {
     transform:translateY(0)
   }
 }
+/* Typografia nagłówków. */
 h1 {
   margin:0;
   font-size:clamp(27px,5vw,36px);
@@ -64,6 +67,7 @@ h2 {
 h3 {
   margin-top:24px
 }
+/* Nagłówek, logo i przyciski ustawień. */
 .top {
   display:flex;
   align-items:center;
@@ -98,10 +102,12 @@ h3 {
   padding:8px 10px!important;
   min-width:0!important
 }
+/* Wspólne style przycisków oraz ich stany aktywne i wyłączone. */
 button {
   font:inherit
 }
-.lang,.choices,.lifelines {
+.lang,.choices,/* Przyciski pomocy 50/50 i dodatkowego czasu. */
+.lifelines {
   display:flex;
   flex-wrap:wrap;
   justify-content:center;
@@ -130,9 +136,11 @@ button {
   cursor:not-allowed;
   transform:none
 }
+/* Układ pól wyboru na ekranie startowym. */
 .choices {
   margin-top:8px
 }
+/* Odstępy i wygląd sekcji ustawień. */
 .field-group {
   width:100%;
   display:flex;
@@ -175,6 +183,7 @@ button {
   filter:brightness(1.08);
   transform:translateY(-2px)
 }
+/* Stopka strony i odnośnik do repozytorium. */
 .footer {
   display:flex;
   flex-direction:column;
@@ -192,6 +201,7 @@ button {
 .footer a:hover {
   text-decoration:underline
 }
+/* Pasek narzędzi rozgrywki i etykieta trybu. */
 .quiz-toolbar {
   display:flex;
   align-items:center;
@@ -207,6 +217,7 @@ button {
   font-size:13px;
   font-weight:700
 }
+/* Pasek postępu pytań. */
 .bar {
   height:9px;
   background:rgba(255,255,255,.12);
@@ -226,6 +237,7 @@ button {
   color:var(--muted);
   font-size:14px
 }
+/* Zegar i pasek czasu na odpowiedź. */
 .timer-row {
   display:flex;
   align-items:center;
@@ -264,6 +276,7 @@ button {
 .lifelines button:disabled {
   opacity:.4
 }
+/* Treść pytania, opcjonalny obraz i przyciski odpowiedzi. */
 #question {
   margin:12px 0 18px
 }
@@ -326,6 +339,7 @@ button {
   visibility:hidden;
   pointer-events:none
 }
+/* Komunikaty o poprawnej/błędnej odpowiedzi i wyjaśnienie. */
 #feedback {
   margin:14px 0 0;
   font-size:17px;
@@ -355,6 +369,7 @@ button {
   border-radius:12px;
   cursor:pointer
 }
+/* Nakładka widoczna po wstrzymaniu gry. */
 #pause-screen {
   display:flex;
   flex-direction:column;
@@ -372,6 +387,7 @@ button {
 #restart-btn {
   padding:10px 24px
 }
+/* Ekran podsumowania i zapis wyniku. */
 #result {
   font-size:clamp(23px,4vw,30px);
   line-height:1.4;
@@ -415,6 +431,7 @@ input::placeholder {
   opacity:.55;
   cursor:not-allowed
 }
+/* Ranking wyników. */
 #rank-title {
   margin:18px 0 0
 }
@@ -438,6 +455,7 @@ input::placeholder {
   list-style:none;
   color:var(--muted)
 }
+/* Pola wpisywania nazw graczy w trybie pojedynku. */
 .player-config {
   width:100%;
   display:flex;
@@ -455,6 +473,7 @@ input::placeholder {
 .player-config input {
   width:170px
 }
+/* Odznaki i krótkie komunikaty zdobytych osiągnięć. */
 .badges {
   display:flex;
   flex-wrap:wrap;
@@ -474,6 +493,7 @@ input::placeholder {
   font-size:13px;
   margin-top:8px
 }
+/* Podsumowanie trybu dla dwóch graczy. */
 #duel-result {
   padding:12px;
   margin:10px 0;
@@ -481,6 +501,7 @@ input::placeholder {
   background:rgba(255,255,255,.08);
   font-weight:700
 }
+/* Warstwa i animacja konfetti po zakończeniu gry. */
 #confetti {
   position:absolute;
   inset:0;
@@ -509,6 +530,7 @@ input::placeholder {
     opacity:.2
   }
 }
+/* Alternatywne motywy kolorystyczne. */
 .theme-blue {
   --accent1:#38bdf8;
   --accent2:#6366f1;
@@ -550,6 +572,7 @@ input::placeholder {
 .theme-light #answers button.bad {
   background:rgba(239,68,68,.18)
 }
+/* Dostosowanie układu do wąskich ekranów, np. telefonów. */
 @media(max-width:520px) {
   body {
     padding:10px;

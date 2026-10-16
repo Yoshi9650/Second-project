@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pl">
+ <!-- Metadane strony, tytuł i podłączenie arkusza stylów. -->
  <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1" name="viewport"/>
@@ -10,7 +11,9 @@
   <link href="/static/style.css" rel="stylesheet"/>
  </head>
  <body>
+  <!-- Główny panel aplikacji; zawiera ekran startowy, quiz i podsumowanie. -->
   <div class="card">
+   <!-- Nagłówek z nazwą quizu oraz przyciskami motywu i dźwięku. -->
    <header class="top">
     <div class="logo-title">
      <span class="logo">
@@ -33,6 +36,7 @@
      </button>
     </div>
    </header>
+   <!-- Ekran konfiguracji: język, liczba pytań, kategoria, tryb i trudność. -->
    <section id="start-screen">
     <p data-i18n="chooseLang" id="lang-label">
      Wybierz j&eogon;zyk
@@ -104,6 +108,7 @@
       </button>
      </div>
     </div>
+    <!-- Pola nazw graczy są pokazywane w trybie dla dwóch osób. -->
     <div class="player-config" hidden="" id="players-config">
      <label>
       <span data-i18n="player1">
@@ -130,6 +135,7 @@
      </a>
     </div>
    </section>
+   <!-- Ekran rozgrywki: pasek postępu, zegar, koła ratunkowe i odpowiedzi. -->
    <section hidden="" id="quiz">
     <div class="quiz-toolbar">
      <span id="mode-label">
@@ -152,6 +158,7 @@
      <span id="timer-text">
      </span>
     </div>
+    <!-- Jednorazowe pomoce w trakcie gry. -->
     <div class="lifelines" id="lifelines">
      <button id="fifty-btn" type="button">
       🌓 50/50
@@ -185,6 +192,7 @@
      </button>
     </div>
    </section>
+   <!-- Ekran końcowy: wynik, odznaki, zapis i ranking. -->
    <section hidden="" id="end">
     <div aria-hidden="true" id="confetti">
     </div>
@@ -214,6 +222,7 @@
     </ol>
    </section>
   </div>
+  <!-- Logika gry znajduje się w pliku JavaScript. -->
   <script src="/static/script.js">
   </script>
  </body>
