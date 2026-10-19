@@ -610,3 +610,22 @@ input::placeholder {
     align-items:flex-start
   }
 }
+#auth-box {
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+}
+#auth-box input {
+  width: 100%;
+  margin-bottom: 10px;
+}
+#login-submit-btn, #signup-submit-btn {
+  width: 100%;
+  padding: 11px;
+  font-weight: 700;
+  border-radius: 11px;
+  border: 0;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--accent1), var(--accent2));
+  color: white;
+}

@@ -37,104 +37,99 @@
     </div>
    </header>
    <!-- Ekran konfiguracji: język, liczba pytań, kategoria, tryb i trudność. -->
-   <section id="start-screen">
-    <p data-i18n="chooseLang" id="lang-label">
-     Wybierz j&eogon;zyk
-    </p>
+<!-- Ekran startowy z dodaną sekcją logowania -->
+<div id="start-screen">
+  
+<!-- W pełni przetłumaczalna sekcja logowania/rejestracji -->
+<div id="auth-box">
+  
+  <!-- Wybierz język -->
+  <div class="field-group" style="margin-bottom: 20px;">
+    <p data-i18n="chooseLang">Wybierz język</p>
     <div class="lang">
-     <button data-lang="pl" type="button">
-      PL
-     </button>
-     <button data-lang="en" type="button">
-      EN
-     </button>
+      <button type="button" data-lang="pl" class="active">PL</button>
+      <button type="button" data-lang="en">EN</button>
     </div>
-    <div hidden="" id="quiz-picker">
-     <p data-i18n="chooseQuiz">
-      Wybierz quiz
-     </p>
-     <div class="choices" id="quiz-buttons">
-     </div>
+  </div>
+
+  <!-- Formularz Logowania -->
+  <div id="login-view">
+    <h2 data-i18n="loginTitle">Zaloguj się</h2>
+    <div class="name-label">
+      <input type="text" id="loginUser" data-i18n-placeholder="namePlaceholder" placeholder="Nazwa użytkownika" required>
+      <input type="password" id="loginPass" data-i18n-placeholder="passwordPlaceholder" placeholder="Hasło" required>
     </div>
+    <button type="button" id="login-submit-btn" data-i18n="loginBtn">Zaloguj</button>
+    <p style="margin-top:15px; font-size:13px; color:var(--muted);">
+      <span data-i18n="noAccount">Nie masz konta? </span><a href="#" id="go-to-signup" data-i18n="registerLink" style="color:var(--accent1);">Zarejestruj się</a>
+    </p>
+  </div>
+
+  <!-- Formularz Rejestracji -->
+  <div id="signup-view" hidden>
+    <h2 data-i18n="signupTitle">Stwórz konto</h2>
+    <div class="name-label">
+      <input type="text" id="signupUser" data-i18n-placeholder="namePlaceholder" placeholder="Wybierz login" required>
+      <input type="password" id="signupPass" data-i18n-placeholder="passwordPlaceholder" placeholder="Wybierz hasło" required>
+    </div>
+    <button type="button" id="signup-submit-btn" data-i18n="signupBtn">Zarejestruj</button>
+    <p style="margin-top:15px; font-size:13px; color:var(--muted);">
+      <span data-i18n="haveAccount">Masz już konto? </span><a href="#" id="go-to-login" data-i18n="loginLink" style="color:var(--accent1);">Zaloguj się</a>
+    </p>
+  </div>
+</div>
+  <!-- UKRYTA KONFIGURACJA QUIZU (Pokaże się po zalogowaniu) -->
+  <div id="quiz-config-view" style="display:none; width:100%; flex-direction:column; align-items:center; gap:17px;">
+    <div id="quiz-picker" class="field-group">
+      <p data-i18n="chooseQuiz"></p>
+      <div id="quiz-buttons" class="choices"></div>
+    </div>
+    
     <div class="field-group">
-     <p data-i18n="choosePack">
-      Liczba pyta&nacute;
-     </p>
-     <div class="choices" id="pack-buttons">
-     </div>
+      <p data-i18n="choosePack"></p>
+      <div id="pack-buttons" class="choices"></div>
     </div>
+
     <div class="field-group">
-     <p data-i18n="chooseCategory">
-      Kategoria
-     </p>
-     <div class="choices" id="category-buttons">
-     </div>
+      <p data-i18n="chooseCategory"></p>
+      <div id="category-buttons" class="choices"></div>
     </div>
+
     <div class="field-group">
-     <p data-i18n="chooseMode">
-      Tryb gry
-     </p>
-     <div class="choices" id="mode-buttons">
-      <button class="active" data-mode="classic" type="button">
-       Klasyczny
-      </button>
-      <button data-mode="survival" type="button">
-       Przetrwanie
-      </button>
-      <button data-mode="blitz" type="button">
-       Blitz 60 s
-      </button>
-      <button data-mode="duel" type="button">
-       2 graczy
-      </button>
-      <button data-mode="daily" type="button">
-       Dzienne wyzwanie
-      </button>
-     </div>
+      <p data-i18n="chooseMode"></p>
+      <div class="choices">
+        <button type="button" data-mode="classic" class="active" data-i18n="classic"></button>
+        <button type="button" data-mode="survival" data-i18n="survival"></button>
+        <button type="button" data-mode="blitz" data-i18n="blitz"></button>
+        <button type="button" data-mode="duel" data-i18n="duel"></button>
+        <button type="button" data-mode="daily" data-i18n="daily"></button>
+      </div>
     </div>
+
+    <div id="players-config" class="player-config" hidden>
+      <label>
+        <span data-i18n="player1"></span>
+        <input type="text" id="player1-name" value="">
+      </label>
+      <label>
+        <span data-i18n="player2"></span>
+        <input type="text" id="player2-name" value="">
+      </label>
+    </div>
+
     <div class="field-group">
-     <p data-i18n="chooseDifficulty">
-      Trudno&sacute;&cacute;
-     </p>
-     <div class="choices" id="difficulty-buttons">
-      <button data-difficulty="easy" type="button">
-       &Lstrok;atwy
-      </button>
-      <button class="active" data-difficulty="medium" type="button">
-       &Sacute;redni
-      </button>
-      <button data-difficulty="hard" type="button">
-       Trudny
-      </button>
-     </div>
+      <p data-i18n="chooseDifficulty"></p>
+      <div class="choices">
+        <button type="button" data-difficulty="easy" data-i18n="easy"></button>
+        <button type="button" data-difficulty="medium" class="active" data-i18n="medium"></button>
+        <button type="button" data-difficulty="hard" data-i18n="hard"></button>
+      </div>
     </div>
-    <!-- Pola nazw graczy są pokazywane w trybie dla dwóch osób. -->
-    <div class="player-config" hidden="" id="players-config">
-     <label>
-      <span data-i18n="player1">
-       Gracz 1
-      </span>
-      <input id="player1-name" maxlength="24" placeholder="Gracz 1"/>
-     </label>
-     <label>
-      <span data-i18n="player2">
-       Gracz 2
-      </span>
-      <input id="player2-name" maxlength="24" placeholder="Gracz 2"/>
-     </label>
-    </div>
-    <button data-i18n="start" id="start-btn" type="button">
-     Start
-    </button>
-    <div class="footer">
-     <span>
-      &copy; Micha&lstrok; Kuczy&nacute;ski 2026
-     </span>
-     <a href="https://github.com/TWOJ-LOGIN/TWOJ-REPO" id="github-link" rel="noopener noreferrer" target="_blank">
-      GitHub
-     </a>
-    </div>
-   </section>
+
+    <button type="button" id="start-btn" data-i18n="start"></button>
+  </div>
+
+</div>
    <!-- Ekran rozgrywki: pasek postępu, zegar, koła ratunkowe i odpowiedzi. -->
    <section hidden="" id="quiz">
     <div class="quiz-toolbar">

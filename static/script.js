@@ -6,11 +6,11 @@ const PACKS = [5, 10, 20, 30];
 // Teksty interfejsu w obu językach. Funkcja t() pobiera stąd etykiety i wstawia wartości do {placeholderów}.
 const TEXTS =  {
   pl: {
-    title:"Quiz o technologii",chooseLang:"Wybierz język",chooseQuiz:"Wybierz quiz",choosePack:"Liczba pytań",chooseCategory:"Kategoria",chooseMode:"Tryb gry",chooseDifficulty:"Trudność",start:"Start",pause:"⏸ Pauza",paused:"Pauza",resume:"▶ Wznów",restart:"↻ Wróć do menu",next:"Dalej →",seeResult:"Zobacz wynik",question:"Pytanie {n} z {total}",pts:"pkt",streak:"seria",correct:"✅ Dobrze! +{points} pkt",wrong:"❌ Niestety źle",timeout:"⏰ Czas minął!",score:"Wynik",msgPerfect:"Perfekcyjnie! 🏆",msgGreat:"Świetnie! 🔥",msgOk:"Nieźle, spróbuj jeszcze raz",msgLow:"Trochę ćwiczeń i będzie dobrze 😄",save:"Zapisz wynik",saved:"Zapisano ✓",again:"Zagraj jeszcze raz",namePlaceholder:"Twoje imię",anonymous:"Anonim",rankingFor:"Ranking – {n} pytań",noResults:"Brak wyników w tym rankingu.",noQuestions:"Brak pytań dla tego wyboru.",dbSize:"Pytań w bazie: {n}",serverError:"Brak połączenia z serwerem. Uruchom: python app.py",confirmRestart:"Wrócić do menu? Stracisz dotychczasowy wynik.",classic:"Klasyczny",survival:"Przetrwanie",blitz:"Blitz",duel:"Dwóch graczy",daily:"Dzienne wyzwanie",easy:"Łatwy",medium:"Średni",hard:"Trudny",player1:"Gracz 1",player2:"Gracz 2",streakBadge:"🔥 10 z rzędu",perfectBadge:"💎 Bez błędu",fastBadge:"⚡ Szybkie palce",fiftyUsed:"50/50 wykorzystane",timeUsed:"Dodatkowe 10 sekund wykorzystane",winner:"Wygrywa: {name}!",draw:"Remis!",turn:"Tura: {name}",survivalEnd:"Koniec przetrwania!",blitzEnd:"Czas Blitza minął!",multiplier:"mnożnik",choose:"Wybierz"
+    title:"Quiz o technologii",chooseLang:"Wybierz język",chooseQuiz:"Wybierz quiz",choosePack:"Liczba pytań",chooseCategory:"Kategoria",chooseMode:"Tryb gry",chooseDifficulty:"Trudność",start:"Start",pause:"⏸ Pauza",paused:"Pauza",resume:"▶ Wznów",restart:"↻ Wróć do menu",next:"Dalej →",seeResult:"Zobacz wynik",question:"Pytanie {n} z {total}",pts:"pkt",streak:"seria",correct:"✅ Dobrze! +{points} pkt",wrong:"❌ Niestety źle",timeout:"⏰ Czas minął!",score:"Wynik",msgPerfect:"Perfekcyjnie! 🏆",msgGreat:"Świetnie! 🔥",msgOk:"Nieźle, spróbuj jeszcze raz",msgLow:"Trochę ćwiczeń i będzie dobrze 😄",save:"Zapisz wynik",saved:"Zapisano ✓",again:"Zagraj jeszcze raz",namePlaceholder:"Twoje imię",anonymous:"Anonim",rankingFor:"Ranking – {n} pytań",noResults:"Brak wyników w tym rankingu.",noQuestions:"Brak pytań dla tego wyboru.",dbSize:"Pytań w bazie: {n}",serverError:"Brak połączenia z serwerem. Uruchom: python app.py",confirmRestart:"Wrócić do menu? Stracisz dotychczasowy wynik.",classic:"Klasyczny",survival:"Przetrwanie",blitz:"Blitz",duel:"Dwóch graczy",daily:"Dzienne wyzwanie",easy:"Łatwy",medium:"Średni",hard:"Trudny",player1:"Gracz 1",player2:"Gracz 2",streakBadge:"🔥 10 z rzędu",perfectBadge:"💎 Bez błędu",fastBadge:"⚡ Szybkie palce",fiftyUsed:"50/50 wykorzystane",timeUsed:"Dodatkowe 10 sekund wykorzystane",winner:"Wygrywa: {name}!",draw:"Remis!",turn:"Tura: {name}",survivalEnd:"Koniec przetrwania!",blitzEnd:"Czas Blitza minął!",multiplier:"mnożnik",choose:"Wybierz",loginTitle:"Zaloguj się",signupTitle:"Stwórz konto",passwordPlaceholder:"Hasło",loginBtn:"Zaloguj",signupBtn:"Zarejestruj",noAccount:"Nie masz konta? ",registerLink:"Masz już konto? ",loginLink:"Zaloguj się"
   }
   ,
   en: {
-    title:"Tech Quiz",chooseLang:"Choose language",chooseQuiz:"Choose a quiz",choosePack:"Number of questions",chooseCategory:"Category",chooseMode:"Game mode",chooseDifficulty:"Difficulty",start:"Start",pause:"⏸ Pause",paused:"Paused",resume:"▶ Resume",restart:"↻ Back to menu",next:"Next →",seeResult:"See result",question:"Question {n} of {total}",pts:"pts",streak:"streak",correct:"✅ Correct! +{points} pts",wrong:"❌ Wrong answer",timeout:"⏰ Time's up!",score:"Score",msgPerfect:"Perfect! 🏆",msgGreat:"Great job! 🔥",msgOk:"Not bad, try again",msgLow:"A bit of practice and you'll get there 😄",save:"Save score",saved:"Saved ✓",again:"Play again",namePlaceholder:"Your name",anonymous:"Anonymous",rankingFor:"Leaderboard – {n} questions",noResults:"No scores in this leaderboard yet.",dbSize:"Questions in database: {n}",serverError:"Can't reach the server. Run: python app.py",confirmRestart:"Go back to the menu? Your current result will be lost.",classic:"Classic",survival:"Survival",blitz:"Blitz",duel:"Two players",daily:"Daily challenge",easy:"Easy",medium:"Medium",hard:"Hard",player1:"Player 1",player2:"Player 2",streakBadge:"🔥 10 in a row",perfectBadge:"💎 Flawless",fastBadge:"⚡ Quick fingers",fiftyUsed:"50/50 used",timeUsed:"Extra 10 seconds used",winner:"Winner: {name}!",draw:"It's a draw!",turn:"Turn: {name}",survivalEnd:"Survival over!",blitzEnd:"Blitz time is up!",multiplier:"multiplier",choose:"Choose"
+    title:"Tech Quiz",chooseLang:"Choose language",chooseQuiz:"Choose a quiz",choosePack:"Number of questions",chooseCategory:"Category",chooseMode:"Game mode",chooseDifficulty:"Difficulty",start:"Start",pause:"⏸ Pause",paused:"Paused",resume:"▶ Resume",restart:"↻ Back to menu",next:"Next →",seeResult:"See result",question:"Question {n} of {total}",pts:"pts",streak:"streak",correct:"✅ Correct! +{points} pts",wrong:"❌ Wrong answer",timeout:"⏰ Time's up!",score:"Score",msgPerfect:"Perfect! 🏆",msgGreat:"Great job! 🔥",msgOk:"Not bad, try again",msgLow:"A bit of practice and you'll get there 😄",save:"Save score",saved:"Saved ✓",again:"Play again",namePlaceholder:"Your name",anonymous:"Anonymous",rankingFor:"Leaderboard – {n} questions",noResults:"No scores in this leaderboard yet.",dbSize:"Questions in database: {n}",serverError:"Can't reach the server. Run: python app.py",confirmRestart:"Go back to the menu? Your current result will be lost.",classic:"Classic",survival:"Survival",blitz:"Blitz",duel:"Two players",daily:"Daily challenge",easy:"Easy",medium:"Medium",hard:"Hard",player1:"Player 1",player2:"Player 2",streakBadge:"🔥 10 in a row",perfectBadge:"💎 Flawless",fastBadge:"⚡ Quick fingers",fiftyUsed:"50/50 used",timeUsed:"Extra 10 seconds used",winner:"Winner: {name}!",draw:"It's a draw!",turn:"Turn: {name}",survivalEnd:"Survival over!",blitzEnd:"Blitz time is up!",multiplier:"multiplier",choose:"Choose",loginTitle:"Login",signupTitle:"Sign Up",passwordPlaceholder:"Password",loginBtn:"Log in",signupBtn:"Sign Up",noAccount:"Don't have an account? "
   }
 };
 // Ustawienia interfejsu i gry. Część ustawień jest zapamiętywana w localStorage przeglądarki.
@@ -696,6 +696,59 @@ document.addEventListener("keydown",e=> {
   }
 }
 );
+// --- LOGIKA LOGOWANIA I REJESTRACJI ---
+
+// Przełączanie widoków (Logowanie <-> Rejestracja)
+$("go-to-signup").addEventListener("click", (e) => {
+  e.preventDefault();
+  $("login-view").hidden = true;
+  $("signup-view").hidden = false;
+});
+
+$("go-to-login").addEventListener("click", (e) => {
+  e.preventDefault();
+  $("signup-view").hidden = true;
+  $("login-view").hidden = false;
+});
+
+// Rejestracja użytkownika (zapis do localStorage)
+$("signup-submit-btn").addEventListener("click", () => {
+  const user = $("signupUser").value.trim();
+  const pass = $("signupPass").value.trim();
+
+  if (!user || !pass) {
+    alert(lang === "pl" ? "Wypełnij wszystkie pola!" : "Fill in all fields!");
+    return;
+  }
+
+  // Zapisujemy użytkownika (można rozbudować o tablicę użytkowników, tu zapisujemy jednego aktywnego)
+  localStorage.setItem(`quiz_user_${user}`, pass);
+  alert(lang === "pl" ? "Konto utworzone! Możesz się zalogować." : "Account created! You can now log in.");
+  
+  // Czyszczenie i powrót do logowania
+  $("signupUser").value = "";
+  $("signupPass").value = "";
+  $("go-to-login").click();
+});
+
+// Logowanie użytkownika
+$("login-submit-btn").addEventListener("click", () => {
+  const user = $("loginUser").value.trim();
+  const pass = $("loginPass").value.trim();
+
+  const savedPass = localStorage.getItem(`quiz_user_${user}`);
+
+  if (savedPass && savedPass === pass) {
+    // Sukces: Ukrywamy formularze, pokazujemy grę
+    $("auth-box").style.display = "none";
+    $("quiz-config-view").style.display = "flex";
+    
+    // Automatycznie podstawiamy login gracza jako domyślne imię do zapisu wyników rankingu
+    $("name").value = user; 
+  } else {
+    alert(lang === "pl" ? "Błędny login lub hasło!" : "Invalid username or password!");
+  }
+});
 applyTexts();
 applyTheme();
 chooseMode("classic");
