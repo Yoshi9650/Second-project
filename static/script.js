@@ -530,9 +530,8 @@ function finishGame(reason="") {
 }
 // Włącza lub wyłącza przycisk zapisu wyniku.
 function setSaveLocked(v) {
-  $("name").disabled=v;
-  $("save").disabled=v;
-  $("save").textContent=v?t("saved"):t("save");
+  $("save").disabled = v;
+  $("save").textContent = v ? t("saved") : t("save");
 }
 // Wraca do ekranu startowego i przygotowuje aplikację do kolejnej gry.
 function resetQuiz() {
@@ -620,29 +619,44 @@ async function loadRanking() {
   catch(e) {
   }
 }
-// Wysyła wynik do serwera i aktualizuje informację o zapisie.
+// Wysyła wynik do serwera dla zalogowanego użytkownika
 async function saveScore() {
-  if(saved||mode==="duel")return;
-  saved=true;
-  setSaveLocked(true);
-  const name=$("name").value.trim()||t("anonymous");
+  if (saved || mode === "duel") return;
+  saved = true;
+  
+  // Zablokuj tylko przycisk zapisu (usunęliśmy blokowanie \$("name"))
+  $("save").disabled = true;
+  $("save").textContent = t("saved");
+  
+  // Nazwa jest automatycznie pobierana z ukrytego pola, do którego wpisaliśmy login przy logowaniu
+  const name = $("name").value.trim() || t("anonymous");
+  
   try {
-    const r=await fetch(`${API}/api/score`, {
-      method:"POST",headers: {
-        "Content-Type":"application/json"
-      }
-      ,body:JSON.stringify( {
-        name,score,total:mode==="blitz"?score:questions.length,points,game_id:gameId,quiz:quizId,pack,mode,category,daily_date:mode==="daily"?new Date().toISOString().slice(0,10):""
-      }
-      )
-    }
-    );
-    if(!r.ok&&r.status!==409)throw Error("save failed");
+    const r = await fetch(`${API}/api/score`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name,
+        score,
+        total: mode === "blitz" ? score : questions.length,
+        points,
+        game_id: gameId,
+        quiz: quizId,
+        pack,
+        mode,
+        category,
+        daily_date: mode === "daily" ? new Date().toISOString().slice(0, 10) : ""
+      })
+    });
+    if (!r.ok && r.status !== 409) throw Error("save failed");
     showRanking(pack);
   }
-  catch(e) {
-    saved=false;
-    setSaveLocked(false);
+  catch (e) {
+    saved = false;
+    $("save").disabled = false;
+    $("save").textContent = t("save");
     alert(t("serverError"));
   }
 }
