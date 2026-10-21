@@ -3,8 +3,8 @@ from flask import Flask, jsonify, request, render_template
 from datetime import datetime, date
 import json, random, os, hashlib
 
-# Tworzy aplikację Flask. Pliki HTML są domyślnie szukane w katalogu templates.
-app = Flask(__name__)
+# Tworzy aplikację Flask; główny plik HTML znajduje się w katalogu projektu.
+app = Flask(__name__, template_folder=".")
 # Dozwolone języki i zestawy długości quizu dostępne w interfejsie.
 LANGS = ["pl", "en"]
 PACKS = [5, 10, 20, 30]
