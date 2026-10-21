@@ -1,6 +1,8 @@
 // Ustala, czy strona działa lokalnie; przy Live Serverze API może działać na porcie 5000.
 const isLocal = ["127.0.0.1", "localhost"].includes(location.hostname);
 const API = (isLocal && location.port && location.port !== "5000") ? "http://127.0.0.1:5000" : "";
+const bundledQuestions = window.QUIZ_QUESTIONS || {};
+let standalone = location.protocol === "file:";
 // Dozwolone rozmiary klasycznego zestawu pytań.
 const PACKS = [5, 10, 20, 30];
 // Teksty interfejsu w obu językach. Funkcja t() pobiera stąd etykiety i wstawia wartości do {placeholderów}.
@@ -104,42 +106,56 @@ function updateStart() {
 // Pobiera listę quizów z API i tworzy przyciski wyboru.
 async function loadQuizzes() {
   try {
+    if (standalone) throw new Error("Using bundled questions");
     let r=await fetch(`${API}/api/quizzes?lang=${lang}`);
+    if (!r.ok) throw new Error(`Quiz API returned ${r.status}`);
     quizList=await r.json();
-    if(!quizList.some(q=>q.id===quizId)&&quizList.length)quizId=quizList[0].id;
-    const box=$("quiz-buttons");
-    box.innerHTML="";
-    quizList.forEach(q=> {
-      let b=document.createElement("button");
-      b.textContent=q.title[lang]||q.title.pl;
-      b.dataset.id=q.id;
-      b.onclick=()=> {
-        quizId=q.id;
-        loadCategories();
-      };
-      box.appendChild(b);
-    }
-    );
-    $("quiz-picker").hidden=quizList.length<2;
-    await loadCategories();
   }
   catch(e) {
-    $("db-info").textContent=t("serverError");
+    standalone=true;
+    const questionsForLanguage=bundledQuestions[lang]||[];
+    quizList=questionsForLanguage.length?[{
+      id:"tech",
+      title:{pl:"Quiz o technologii",en:"Tech Quiz"},
+      count:questionsForLanguage.length
+    }]:[];
   }
+  if(!quizList.some(q=>q.id===quizId)&&quizList.length)quizId=quizList[0].id;
+  const box=$("quiz-buttons");
+  box.innerHTML="";
+  quizList.forEach(q=> {
+    let b=document.createElement("button");
+    b.textContent=q.title[lang]||q.title.pl;
+    b.dataset.id=q.id;
+    b.onclick=()=> {
+      quizId=q.id;
+      loadCategories();
+    };
+    box.appendChild(b);
+  }
+  );
+  $("quiz-picker").hidden=quizList.length<2;
+  if (!quizList.length) {
+    $("db-info").textContent=lang==="pl"?"Nie udało się załadować pytań.":"Questions could not be loaded.";
+  }
+  await loadCategories();
 }
 // Pobiera kategorie dla aktualnego quizu i odświeża ich przyciski.
 async function loadCategories() {
   try {
+    if (standalone) throw new Error("Using bundled questions");
     const r=await fetch(`${API}/api/categories?lang=${lang}&quiz=${quizId}`);
+    if (!r.ok) throw new Error(`Category API returned ${r.status}`);
     categories=await r.json();
   }
   catch(e) {
-    categories=[ {
-      id:"all",title: {
-        pl:"Wszystkie",en:"All"
-      }
-    }
-    ];
+    standalone=true;
+    const questionList=bundledQuestions[lang]||[];
+    const found=[...new Set(questionList.map(q=>q.category).filter(Boolean))].sort();
+    categories=[{id:"all",title:{pl:"Wszystkie",en:"All"}},...found.map(id=>({
+      id,
+      title:{pl:id.replaceAll("-"," "),en:id.replaceAll("-"," ")}
+    }))];
   }
   if(!categories.some(c=>c.id===category))category="all";
   applyTexts();
@@ -200,17 +216,41 @@ async function start() {
   pack=Number(pack)||10;
   // Blitz i Przetrwanie korzystają z całej puli pytań, a nie z pakietu 5/10/20/30.
   const useFullPool=mode==="blitz"||mode==="survival";
-  const url=`${API}/api/questions?lang=${lang}&quiz=${quizId}&pack=${pack}&category=${encodeURIComponent(category)}&daily=${mode==="daily"?1:0}${useFullPool?"&all=1":""}`;
-  try {
-    const r=await fetch(url);
-    questions=await r.json();
-  }
-  catch(e) {
-    questions=[];
+  if (standalone) {
+    questions=selectBundledQuestions(useFullPool);
+  } else {
+    const url=`${API}/api/questions?lang=${lang}&quiz=${quizId}&pack=${pack}&category=${encodeURIComponent(category)}&daily=${mode==="daily"?1:0}${useFullPool?"&all=1":""}`;
+    try {
+      const r=await fetch(url);
+      if (!r.ok) throw new Error(`Question API returned ${r.status}`);
+      questions=await r.json();
+    }
+    catch(e) {
+      standalone=true;
+      questions=selectBundledQuestions(useFullPool);
+    }
   }
   if(!questions.length) {
     $("question").textContent=t("noQuestions");
     return;
+  }
+  function selectBundledQuestions(useFullPool) {
+    const dailySeed=`${new Date().toISOString().slice(0,10)}:${quizId}:${lang}:${category}`;
+    let seed=0;
+    for(const character of dailySeed)seed=(seed*31+character.charCodeAt(0))>>>0;
+    const random=()=>{
+      if(mode!=="daily")return Math.random();
+      seed=(seed*1664525+1013904223)>>>0;
+      return seed/4294967296;
+    };
+    let selected=(bundledQuestions[lang]||[]).filter(q=>
+      category==="all"||!q.category||q.category.toLowerCase()===category.toLowerCase()
+    ).map(q=>({...q,answers:[...q.answers]}));
+    for(let i=selected.length-1;i>0;i--) {
+      const j=Math.floor(random()*(i+1));
+      [selected[i],selected[j]]=[selected[j],selected[i]];
+    }
+    return selected.slice(0,useFullPool?selected.length:Math.min(pack,selected.length));
   }
   // Zachowuje oryginalną pulę. W Blitz i Przetrwaniu kolejne partie pytań będą losowane z tej puli.
   baseQuestions=questions.slice();
@@ -596,27 +636,69 @@ function showRanking(p) {
 }
 // Pobiera ranking dla wybranych ustawień i wyświetla go na ekranie końcowym.
 async function loadRanking() {
-  try {
+  let data;
+  if (standalone) {
+    data=getLocalRanking();
+  } else try {
     const day=mode==="daily"?`&daily_date=${new Date().toISOString().slice(0,10)}`:"";
     const r=await fetch(`${API}/api/results?quiz=${quizId}&pack=${rankPack}&mode=${mode}&category=${encodeURIComponent(category)}${day}`);
+    if (!r.ok) throw new Error(`Ranking API returned ${r.status}`);
     const data=await r.json();
-    const list=$("ranking");
-    list.innerHTML="";
-    if(!data.length) {
-      const li=document.createElement("li");
-      li.className="empty";
-      li.textContent=t("noResults");
-      list.appendChild(li);
-      return;
-    }
-    data.forEach(r=> {
-      const li=document.createElement("li");
-      li.textContent=`${r.name}: ⭐ ${r.points||0} ${t("pts")} (${r.score}/${r.total}) — ${r.date}`;
-      list.appendChild(li);
-    }
-    );
+    renderRanking(data);
+    return;
   }
   catch(e) {
+    standalone=true;
+    data=getLocalRanking();
+  }
+  renderRanking(data);
+}
+function getLocalRanking() {
+  const scores=JSON.parse(localStorage.getItem("quiz_scores")||"[]");
+  const specialModes=["blitz","survival","daily"];
+  const dailyDate=new Date().toISOString().slice(0,10);
+  return scores.filter(result=>
+    result.quiz===quizId&&
+    (specialModes.includes(mode)||Number(result.pack??result.total)===rankPack)&&
+    result.mode===mode&&
+    (mode!=="daily"||result.daily_date===dailyDate)&&
+    (category==="all"||result.category===category)
+  ).sort((a,b)=>(b.points||0)-(a.points||0)||(b.score||0)-(a.score||0)).slice(0,10);
+}
+function renderRanking(data) {
+  const list=$("ranking");
+  list.innerHTML="";
+  if(!data.length) {
+    const li=document.createElement("li");
+    li.className="empty";
+    li.textContent=t("noResults");
+    list.appendChild(li);
+    return;
+  }
+  data.forEach(result=> {
+    const li=document.createElement("li");
+    li.textContent=`${result.name}: ⭐ ${result.points||0} ${t("pts")} (${result.score}/${result.total}) — ${result.date}`;
+    list.appendChild(li);
+  });
+}
+function saveLocalScore(name) {
+  const scores=JSON.parse(localStorage.getItem("quiz_scores")||"[]");
+  if (!scores.some(result=>result.game_id===gameId)) {
+    const today=new Date().toISOString().slice(0,10);
+    scores.push({
+      name,
+      score,
+      total:mode==="blitz"?score:questions.length,
+      points,
+      game_id:gameId,
+      quiz:quizId,
+      pack,
+      mode,
+      category,
+      daily_date:mode==="daily"?today:"",
+      date:new Date().toLocaleString()
+    });
+    localStorage.setItem("quiz_scores",JSON.stringify(scores));
   }
 }
 // Wysyła wynik do serwera dla zalogowanego użytkownika
@@ -630,7 +712,11 @@ async function saveScore() {
   
   // Nazwa jest automatycznie pobierana z ukrytego pola, do którego wpisaliśmy login przy logowaniu
   const name = $("name").value.trim() || t("anonymous");
-  
+  if (standalone) {
+    saveLocalScore(name);
+    showRanking(pack);
+    return;
+  }
   try {
     const r = await fetch(`${API}/api/score`, {
       method: "POST",
@@ -654,10 +740,9 @@ async function saveScore() {
     showRanking(pack);
   }
   catch (e) {
-    saved = false;
-    $("save").disabled = false;
-    $("save").textContent = t("save");
-    alert(t("serverError"));
+    standalone=true;
+    saveLocalScore(name);
+    showRanking(pack);
   }
 }
 // Ustawia motyw kolorystyczny zapisany w przeglądarce.
